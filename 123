@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Финансы">
+<title>Умный трекер финансов</title>
+<style>
+:root {
+  --bg: #0D0D0F; --card: rgba(255,255,255,0.03); --border: rgba(255,255,255,0.06);
+  --text: #F0F0F0; --text2: #CCC; --text3: #888; --text4: #555;
+  --accent: #4ECDC4; --accent2: #45B7D1; --danger: #FF6B6B; --income: #2ECC71;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  background: var(--bg); color: var(--text);
+  max-width: 480px; margin: 0 auto; min-height: 100vh;
+  -webkit-font-smoothing: antialiased; overscroll-behavior: none;
+}
+input, button, select { font-family: inherit; }
+input:focus, select:focus { outline: none; }
+button { cursor: pointer; border: none; background: none; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(20px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+/* Lock Screen */
+.lock-screen { position:fixed; top:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; height:100vh; background:var(--bg); z-index:999; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.pin-dots { display:flex; gap:16px; margin:24px 0; }
+.pin-dot { width:14px; height:14px; border-radius:50%; border:2px solid var(--accent); transition: background 0.1s; }
+.pin-dot.filled { background:var(--accent); }
+.pin-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; width:240px; }
+.pin-btn { width:64px; height:64px; border-radius:50%; background:var(--card); border:1px solid var(--border); font-size:24px; color:var(--text); font-weight:600; display:flex; align-items:center; justify-content:center; }
+.pin-btn:active { background:rgba(255,255,255,0.1); }
+
+.header { padding: 20px 20px 14px; background: linear-gradient(180deg,#151518,var(--bg)); }
+.header-top { display:flex; justify-content:space-between; align-items:flex-start; }
+.month-selector { display:flex; align-items:center; gap:8px; color:var(--text3); font-weight:700; font-size:13px; text-transform:uppercase; }
+.month-btn { color:var(--accent); font-size:16px; padding:2px 8px; }
+.total-row { margin-top:4px; }
+.total-amount { font-size:26px; font-weight:800; }
+.total-currency { font-size:18px; font-weight:700; opacity:.5; }
+.total-of { font-size:12px; color:var(--text4); margin-top:2px; }
+.remain-badge { padding:6px 10px; border-radius:12px; font-size:11px; font-weight:600; text-align:center; line-height:1.4; }
+.progress-track { height:6px; background:rgba(255,255,255,0.06); border-radius:3px; margin-top:14px; overflow:hidden; }
+.progress-fill { height:100%; border-radius:3px; transition:width .4s; }
+
+.content { padding:16px 20px; padding-bottom: calc(80px + var(--safe-b)); }
+.content[data-anim] { animation: fadeIn .25s ease; }
+
+/* Segment Control */
+.segment-control { display:flex; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:4px; margin-bottom:16px; }
+.segment-btn { flex:1; text-align:center; padding:8px; font-size:13px; font-weight:700; border-radius:8px; color:var(--text3); transition:all 0.2s; }
+.segment-btn.active.expense { background:var(--danger); color:var(--bg); }
+.segment-btn.active.income { background:var(--income); color:var(--bg); }
+
+.input-row { display:flex; gap:8px; margin-bottom:14px; }
+.select-custom { flex:1; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; color:var(--text); font-size:14px; font-weight:600; }
+
+.amount-wrap {
+  display:flex; align-items:center; justify-content:center;
+  background:var(--card); border-radius:16px; padding:12px 20px;
+  border:1px solid var(--border); margin-bottom:16px;
+}
+.amount-input {
+  background:transparent; border:none; color:var(--text);
+  font-size:32px; font-weight:800; text-align:center; width:100%;
+  caret-color:var(--accent); font-variant-numeric: tabular-nums;
+}
+.amount-cur { font-size:22px; font-weight:700; color:var(--text4); margin-left:4px; }
+
+.cat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px; }
+.cat-btn {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:10px 4px; border-radius:14px; border:2px solid rgba(255,255,255,0.08);
+  background:var(--card); transition:all .15s; min-height:64px;
+}
+.cat-btn:active { transform:scale(.95); }
+.cat-btn.selected { transform:scale(1.03); }
+.cat-btn .icon { font-size:22px; }
+.cat-btn .label { font-size:10px; font-weight:600; margin-top:4px; color:var(--text2); }
+.cat-btn.add-btn { border-style:dashed; border-color:rgba(255,255,255,0.15); }
+
+.note-input {
+  width:100%; background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:12px 16px; color:var(--text); font-size:14px; margin-bottom:12px;
+}
+.file-label { display:block; padding:10px; background:rgba(255,255,255,0.02); border:1px dashed var(--border); border-radius:12px; text-align:center; font-size:12px; color:var(--text3); margin-bottom:12px; cursor:pointer; }
+
+.primary-btn {
+  width:100%; padding:14px; border-radius:14px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2)); color:var(--bg);
+  font-size:16px; font-weight:700; transition:opacity .2s;
+}
+.primary-btn:disabled { opacity:.4; }
+
+.section-title { font-size:12px; font-weight:700; color:var(--text3); margin-bottom:10px; letter-spacing:.5px; text-transform:uppercase; }
+.expense-row { display:flex; align-items:center; padding:12px; margin-bottom:6px; background:var(--card); border-radius:12px; border:1px solid rgba(255,255,255,0.04); animation:fadeIn .2s ease; }
+.expense-row .icon { font-size:20px; flex-shrink:0; }
+.expense-row .info { flex:1; margin-left:10px; min-width:0; }
+.expense-row .name { font-size:14px; font-weight:600; color:#DDD; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.expense-row .meta { font-size:11px; color:var(--text4); margin-top:2px; }
+.expense-row .sum { font-size:14px; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.del-btn { background:rgba(255,107,107,0.1); color:var(--danger); border-radius:8px; width:26px; height:26px; font-size:11px; display:flex; align-items:center; justify-content:center; margin-left:8px; }
+
+/* Dashboard Cards */
+.dash-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px; margin-bottom:14px; }
+.dash-title { font-size:12px; font-weight:700; color:var(--text3); margin-bottom:8px; text-transform:uppercase; }
+.bank-item { display:flex; justify-content:between; align-items:center; padding:6px 0; font-size:13px; border-bottom:1px solid rgba(255,255,255,0.02); }
+.bank-name { flex:1; font-weight:600; }
+.bank-val { font-weight:700; font-variant-numeric:tabular-nums; }
+
+.chart-wrap { background:rgba(255,255,255,0.01); border-radius:16px; padding:12px; border:1px solid rgba(255,255,255,0.03); margin-bottom:14px; }
+.chart-wrap canvas { width:100%; display:block; }
+.cat-list-item { display:flex; align-items:center; gap:8px; padding:6px 10px; background:rgba(255,255,255,0.01); border-radius:10px; margin-bottom:4px; font-size:13px; }
+.cat-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+.nav {
+  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:480px; display:flex; justify-content:space-around;
+  background:rgba(13,13,15,0.96); -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
+  border-top:1px solid rgba(255,255,255,0.06); padding:8px 0 calc(10px + var(--safe-b)); z-index:100;
+}
+.nav-btn { display:flex; flex-direction:column; align-items:center; font-weight:600; color:var(--text4); width:25%; }
+.nav-btn.active { color:var(--accent); }
+.nav-btn .ni { font-size:18px; }
+.nav-btn .nl { font-size:10px; margin-top:2px; }
+
+.toast { position:fixed; bottom:calc(80px + var(--safe-b)); left:50%; transform:translateX(-50%); background:#1A1A1E; color:var(--accent); padding:10px 24px; border-radius:30px; font-size:13px; font-weight:700; z-index:1000; border:1px solid rgba(78,205,196,0.3); pointer-events:none; }
+.empty { text-align:center; color:var(--text4); padding:30px 0; font-size:13px; }
+.ai-box { background:rgba(78,205,196,0.05); border:1px dashed rgba(78,205,196,0.2); border-radius:12px; padding:12px; font-size:12px; line-height:1.5; color:#EEE; margin-bottom:14px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+
+const MONTHS = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+const DEFAULT_CATS = [
+  {id:"food",name:"Еда",icon:"🍔",color:"#FF6B6B"},
+  {id:"transport",name:"Транспорт",icon:"🚕",color:"#4ECDC4"},
+  {id:"housing",name:"Жильё",icon:"#45B7D1"},
+  {id:"health",name:"Здоровье",icon:"💊",color:"#96CEB4"},
+  {id:"clothes",name:"Одежда",icon:"👕",color:"#FFEAA7"},
+  {id:"fun",name:"Развлечения",icon:"🎮",color:"#DDA0DD"},
+  {id:"salary",name:"Зарплата",icon:"💰",color:"#2ECC71"},
+  {id:"transfers",name:"Переводы",icon:"💸",color:"#A29BFE"},
+  {id:"other",name:"Прочее",icon:"📦",color:"#A8A8A8"}
+];
+
+// Локальные банки и счета Казахстана по умолчанию
+const DEFAULT_BANKS = [
+  {id:"kaspi", name:"Kaspi Bank 🏦", balance: 0},
+  {id:"halyk", name:"Halyk Bank 💳", balance: 0},
+  {id:"bcc", name:"ЦентрКредит 🦁", balance: 0},
+  {id:"cash", name:"Наличные 💵", balance: 0}
+];
+
+let state = {
+  transactions: JSON.parse(localStorage.getItem('w_txs') || '[]'),
+  banks: JSON.parse(localStorage.getItem('w_banks') || JSON.stringify(DEFAULT_BANKS)),
+  budget: Number(localStorage.getItem('w_budget') || '200000'),
+  currency: localStorage.getItem('w_curr') || '₸',
+  pinCode: localStorage.getItem('w_pin') || '', // Если пусто — без пароля
+  
+  // Навигация и фильтры по дате
+  view: 'add',
+  selMonth: new Date().getMonth(),
+  selYear: new Date().getFullYear(),
+  
+  // Состояние формы ввода
+  txType: 'expense', // 'expense' или 'income'
+  selCat: null,
+  selBank: 'kaspi',
+  amount: '',
+  note: '',
+  receiptImg: null,
+  
+  // Безопасность
+  isLocked: localStorage.getItem('w_pin') ? true : false,
+  pinInput: '',
+  toast: null,
+  toastTimer: null
+};
+
+const save = () => {
+  localStorage.setItem('w_txs', JSON.stringify(state.transactions));
+  localStorage.setItem('w_banks', JSON.stringify(state.banks));
+  localStorage.setItem('w_budget', String(state.budget));
+  localStorage.setItem('w_curr', state.currency);
+  localStorage.setItem('w_pin', state.pinCode);
+};
+
+const getCat = (id) => DEFAULT_CATS.find(c => c.id === id) || DEFAULT_CATS[8];
+
+const fmtMoney = (n) => {
+  return Math.round(n).toLocaleString('ru-RU') + ' ' + state.currency;
+};
+
+const showToast = (msg) => {
+  clearTimeout(state.toastTimer); state.toast = msg; render();
+  state.toastTimer = setTimeout(() => { state.toast = null; render(); }, 2000);
+};
+
+// Фильтрация транзакций за выбранный месяц
+const getFilteredTxs = () => state.transactions.filter(t => {
+  const d = new Date(t.date);
+  return d.getMonth() === state.selMonth && d.getFullYear() === state.selYear;
+});
+
+const totalSpent = () => getFilteredTxs().filter(t => t.type === 'expense').reduce((s,t) => s + t.amount, 0);
+const totalIncome = () => getFilteredTxs().filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0);
+
+// Общий баланс по банкам (накопления)
+const totalSavings = () => state.banks.reduce((s, b) => s + b.balance, 0);
+
+// Пересчет баланса на счетах на основе транзакций
+const recalculateBankBalances = () => {
+  state.banks.forEach(b => b.balance = 0);
+  state.transactions.forEach(t => {
+    const bank = state.banks.find(b => b.id === t.bankId);
+    if (bank) {
+      if (t.type === 'income') bank.balance += t.amount;
+      else bank.balance -= t.amount;
+    }
+  });
+};
+
+// Простые локальные финансовые советы на базе анализа трат
+const getSmartTips = () => {
+  const spent = totalSpent();
+  const inc = totalIncome();
+  if (spent === 0) return "💡 Данных за этот месяц еще маловато. Запишите ваши первые операции!";
+  
+  let tips = [];
+  if (spent > state.budget) tips.push("⚠️ Внимание! Вы превысили установленный лимит бюджета на этот месяц.");
+  if (inc > 0 && (spent / inc) > 0.8) tips.push("📉 Вы расходуете более 80% своего дохода. Попробуйте отложить 10% на Kaspi Депозит сразу в день зарплаты.");
+  
+  // Поиск топ категории трат
+  const map = {};
+  getFilteredTxs().filter(t => t.type === 'expense').forEach(t => map[t.category] = (map[t.category]||0) + t.amount);
+  const topCat = Object.entries(map).sort((a,b)=>b[1]-a[1])[0];
+  if (topCat) {
+    const catName = getCat(topCat[0]).name;
+    if (topCat[1] > spent * 0.4) tips.push(`🍔 Почти 40% ваших расходов уходит на «${catName}». Обратите внимание на эту категорию.`);
+  }
+
+  if (tips.length === 0) tips.push("✅ Отличная работа! Ваши расходы находятся в пределах нормы. Продолжайте контролировать бюджет.");
+  return tips[Math.floor(Math.random() * tips.length)];
+};
+
+// Canvas графики
+function drawPie(canvas, data) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.parentElement.clientWidth - 24; const h = 180;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  ctx.scale(dpr, dpr); ctx.clearRect(0,0,w,h);
+
+  const total = data.reduce((s,d) => s + d.value, 0);
+  if (!total) return;
+  const cx = w/2, cy = h/2, outer = 70, inner = 45;
+  let angle = -Math.PI/2;
+
+  data.forEach(d => {
+    const slice = (d.value / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, outer, angle, angle + slice);
+    ctx.arc(cx, cy, inner, angle + slice, angle, true);
+    ctx.closePath(); ctx.fillStyle = d.color; ctx.fill();
+    angle += slice + 0.02;
+  });
+}
+
+// Генератор DOM-элементов
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  if (attrs) Object.entries(attrs).forEach(([k,v]) => {
+    if (k === 'class') el.className = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+    else el.setAttribute(k, v);
+  });
+  children.flat(Infinity).forEach(c => {
+    if (c == null || c === false) return;
+    el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  });
+  return el;
+}
+
+// Локскрин (ПИН-КОД)
+function renderLockScreen() {
+  const updatePin = (num) => {
+    if (state.pinInput.length < 4) state.pinInput += num;
+    if (state.pinInput.length === 4) {
+      if (state.pinInput === state.pinCode) {
+        state.isLocked = false;
+        state.pinInput = '';
+        showToast('🔓 Доступ разрешен');
+      } else {
+        showToast('❌ Неверный ПИН-код');
+        state.pinInput = '';
+      }
+    }
+    render();
+  };
+
+  const dots = Array.from({length:4}, (_,i) => h('div', {class:'pin-dot' + (state.pinInput.length > i ? ' filled':'')}));
+  const grid = Array.from({length:9}, (_,i) => h('button', {class:'pin-btn', onClick:()=>updatePin(String(i+1))}, String(i+1)));
+  
+  return h('div', {class:'lock-screen'},
+    h('div', {style:{fontSize:'18px', fontWeight:'700', color:'var(--accent)'}}, 'Вход в приложение'),
+    h('div', {class:'pin-dots'}, dots),
+    h('div', {class:'pin-grid'}, 
+      grid,
+      h('button', {class:'pin-btn', style:{fontSize:'14px'}, onClick:()=>{state.pinInput='';render();}}, 'Сброс'),
+      h('button', {class:'pin-btn', onClick:()=>updatePin('0')}, '0'),
+      h('button', {class:'pin-btn', style:{fontSize:'14px', color:'var(--danger)'}, onClick:()=>{showToast('Используйте код по умолчанию');}}, '❔')
+    )
+  );
+}
+
+function renderHeader() {
+  const spent = totalSpent();
+  const inc = totalIncome();
+  const rem = state.budget - spent;
+  const pct = state.budget > 0 ? Math.min((spent/state.budget)*100, 100) : 0;
+  const fillColor = pct > 90 ? '#FF6B6B' : pct > 70 ? '#FFEAA7' : '#4ECDC4';
+
+  const changeMonth = (dir) => {
+    let m = state.selMonth + dir;
+    if (m < 0) { m = 11; state.selYear--; }
+    else if (m > 11) { m = 0; state.selYear++; }
+    state.selMonth = m; render();
+  };
+
+  return h('div', {class:'header'},
+    h('div', {class:'header-top'},
+      h('div', null,
+        h('div', {class:'month-selector'},
+          h('button', {class:'month-btn', onClick:()=>changeMonth(-1)}, '◀'),
+          h('span', null, MONTHS[state.selMonth] + ' ' + state.selYear),
+          h('button', {class:'month-btn', onClick:()=>changeMonth(1)}, '▶')
+        ),
+        h('div', {class:'total-row'},
+          h('span', {class:'total-amount'}, fmtMoney(spent)),
+          h('div', {class:'total-of'}, 'Доходы за месяц: ' + fmtMoney(inc)),
+          h('div', {class:'total-of'}, 'Лимит бюджета: ' + fmtMoney(state.budget))
+        )
+      ),
+      h('div', {class:'remain-badge', style:{
+        background: rem >= 0 ? 'rgba(78,205,196,0.12)' : 'rgba(255,107,107,0.12)',
+        color: rem >= 0 ? '#4ECDC4' : '#FF6B6B',
+      }},
+        (rem >= 0 ? 'Остаток' : 'Перерасход'),
+        h('br'),
+        h('strong', null, fmtMoney(Math.abs(rem)))
+      )
+    ),
+    h('div', {class:'progress-track'},
+      h('div', {class:'progress-fill', style:{width:pct+'%', background:fillColor}})
+    )
+  );
+}
+
+function renderAdd() {
+  const wrap = h('div', {'data-anim':'1', class:'content'});
+
+  // Переключатель Типа: Расход / Доход
+  wrap.appendChild(h('div', {class:'segment-control'},
+    h('button', {class:'segment-btn ' + (state.txType==='expense'?'active expense':''), onClick:()=>{state.txType='expense'; state.selCat=null; render();}}, '💸 Расход'),
+    h('button', {class:'segment-btn ' + (state.txType==='income'?'active income':''), onClick:()=>{state.txType='income'; state.selCat=null; render();}}, '💰 Доход')
+  ));
+
+  // Выбор Счёта / Банка Казахстана
+  const bankOptions = state.banks.map(b => h('option', {value: b.id}, b.name));
+  const bankSelect = h('select', {class:'select-custom'}, bankOptions);
+  bankSelect.value = state.selBank;
+  bankSelect.addEventListener('change', (e) => { state.selBank = e.target.value; });
+  
+  wrap.appendChild(h('div', {class:'input-row'}, bankSelect));
+
+  // Сумма
+  const inp = h('input', {type:'text', inputmode:'decimal', placeholder:'0', class:'amount-input', value: state.amount});
+  inp.addEventListener('input', e => { state.amount = e.target.value.replace(/[^0-9.,\s]/g,''); });
+  wrap.appendChild(h('div', {class:'amount-wrap'}, inp, h('span',{class:'amount-cur'}, state.currency)));
+
+  // Сетка категорий в зависимости от Расхода/Дохода
+  const grid = h('div', {class:'cat-grid'});
+  DEFAULT_CATS.filter(c => state.txType === 'income' ? ['salary','transfers','other'].includes(c.id) : !['salary','transfers'].includes(c.id)).forEach(cat => {
+    const sel = state.selCat === cat.id;
+    const btn = h('button', {class:'cat-btn' + (sel?' selected':''), style:{
+      background: sel ? cat.color+'22' : '', borderColor: sel ? cat.color : '',
+    }, onClick: () => { state.selCat = state.selCat === cat.id ? null : cat.id; render(); }},
+      h('span',{class:'icon'}, cat.icon),
+      h('span',{class:'label'}, cat.name)
+    );
+    grid.appendChild(btn);
+  });
+  wrap.appendChild(grid);
+
+  // Заметка
+  const noteInp = h('input',{type:'text',class:'note-input',placeholder:'Комментарий к платежу',value:state.note});
+  noteInp.addEventListener('input', e => { state.note = e.target.value; });
+  wrap.appendChild(noteInp);
+
+  // Загрузка фото чека (симуляция сохранения Base64)
+  const fileInp = h('input', {type:'file', accept:'image/*', style:{display:'none'}, onChange:(e)=>{
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => { state.receiptImg = reader.result; showToast('📸 Чек успешно прикреплен!'); };
+      reader.readAsDataURL(file);
+    }
+  }});
+  const fileLabel = h('label', {class:'file-label'}, state.receiptImg ? '✅ Чек загружен (Нажмите для замены)' : '📸 Прикрепить фото чека');
+  fileLabel.appendChild(fileInp);
+  wrap.appendChild(fileLabel);
+
+  // Кнопка записи
+  const canSave = state.amount && state.selCat;
+  wrap.appendChild(h('button',{class:'primary-btn', disabled:!canSave, onClick:()=>{
+    const num = parseFloat(state.amount.replace(/\s/g,'').replace(',','.'));
+    if(!num || num<=0 || !state.selCat) return;
+    
+    // Добавление новой записи транзакции
+    state.transactions.unshift({
+      id: Date.now().toString(36),
+      amount: num,
+      type: state.txType,
+      category: state.selCat,
+      bankId: state.selBank,
+      note: state.note.trim(),
+      receipt: state.receiptImg,
+      date: new Date().toISOString()
+    });
+
+    state.amount = ''; state.selCat = null; state.note = ''; state.receiptImg = null;
+    recalculateBankBalances(); save(); showToast('✓ Успешно записано!');
+  }}, 'Сохранить операцию'));
+
+  // Список последних 3 записей
+  const txs = getFilteredTxs();
+  if (txs.length) {
+    wrap.appendChild(h('div',{style:{marginTop:'20px'}},
+      h('div',{class:'section-title'},'Последние записи'),
+      ...txs.slice(0,3).map(t => {
+        const cat = getCat(t.category);
+        const bank = state.banks.find(b=>b.id===t.bankId);
+        return h('div',{class:'expense-row'},
+          h('span',{class:'icon'},cat.icon),
+          h('div',{class:'info'},
+            h('div',{class:'name'}, cat.name + (t.note?' · '+t.note:'')),
+            h('div',{class:'meta'}, (bank?bank.name.split(' ')[0]:'') + (t.receipt ? ' · 📄 Чек' : ''))
+          ),
+          h('div',{class:'sum', style:{color: t.type==='income'?'var(--income)':'var(--danger)'}}, (t.type==='income'?'+':'−') + fmtMoney(t.amount))
+        );
+      })
+    ));
+  }
+  return wrap;
+}
+
+function renderList() {
+  const wrap = h('div',{'data-anim':'1', class:'content'});
+  wrap.appendChild(h('div',{class:'section-title'},'История за ' + MONTHS[state.selMonth].toLowerCase()));
+  
+  const txs = getFilteredTxs();
+  if(!txs.length) { wrap.appendChild(h('div',{class:'empty'},'Нет операций за выбранный месяц.')); return wrap; }
+  
+  txs.forEach(t => {
+    const cat = getCat(t.category);
+    wrap.appendChild(h('div',{class:'expense-row'},
+      h('span',{class:'icon'}, cat.icon),
+      h('div',{class:'info'},
+        h('div',{class:'name'}, cat.name + (t.note ? ' · ' + t.note : '')),
+        h('div',{class:'meta'}, new Date(t.date).toLocaleDateString('ru-RU', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}))
+      ),
+      h('div',{style:{display:'flex', alignItems:'center', gap:'6px'}},
+        h('div',{class:'sum', style:{color: t.type==='income'?'var(--income)':'var(--danger)'}}, (t.type==='income'?'+':'−') + fmtMoney(t.amount)),
+        h('button',{class:'del-btn', onClick:()=>{ 
+          state.transactions = state.transactions.filter(x=>x.id!==t.id); 
+          recalculateBankBalances(); save(); showToast('Удалено'); 
+        }}, '✕')
+      )
+    ));
+  });
+  return wrap;
+}
+
+function renderAnalytics() {
+  const wrap = h('div',{'data-anim':'1', class:'content'});
+  
+  // Умные Локальные Советы
+  wrap.appendChild(h('div',{class:'section-title'},'Умная аналитика'));
+  wrap.appendChild(h('div',{class:'ai-box'}, getSmartTips()));
+
+  const txs = getFilteredTxs().filter(t => t.type === 'expense');
+  if(!txs.length) { wrap.appendChild(h('div',{class:'empty'},'Добавьте расходы для отображения графиков трат.')); return wrap; }
+
+  const spent = totalSpent();
+  const map = {};
+  txs.forEach(t => { map[t.category] = (map[t.category]||0) + t.amount; });
+  const catData = DEFAULT_CATS.map(c=>({...c, value:map[c.id]||0})).filter(c=>c.value>0).sort((a,b)=>b.value-a.value);
+
+  // Круговая диаграмма
+  wrap.appendChild(h('div',{class:'section-title'},'Траты по категориям'));
+  const pieCanvas = h('canvas');
+  wrap.appendChild(h('div',{class:'chart-wrap'}, pieCanvas));
+  requestAnimationFrame(() => drawPie(pieCanvas, catData));
+
+  // Список категорий с долями
+  catData.forEach(c => {
+    wrap.appendChild(h('div',{class:'cat-list-item'},
+      h('div',{class:'cat-dot', style:{background:c.color}}),
+      h('span',{style:{flex:'1'}}, c.icon + ' ' + c.name),
+      h('span',{style:{fontWeight:'700'}}, fmtMoney(c.value)),
+      h('span',{style:{color:'var(--text3)', width:'36px', textAlign:'right', fontSize:'11px'}}, Math.round(c.value/spent*100)+'%')
+    ));
+  });
+
+  return wrap;
+}
+
+function renderSettings() {
+  const wrap = h('div',{'data-anim':'1', class:'content'});
+  wrap.appendChild(h('div',{class:'section-title'},'Настройки и Накопления'));
+
+  // Накопления по Картам/Банкам РК
+  const bankCard = h('div',{class:'dash-card'}, h('div',{class:'dash-title'},'Мои счета и Баланс'));
+  state.banks.forEach(b => {
+    bankCard.appendChild(h('div',{class:'bank-item'},
+      h('span',{class:'bank-name'}, b.name),
+      h('span',{class:'bank-val', style:{color: b.balance >= 0 ? 'var(--accent)' : 'var(--danger)'}}, fmtMoney(b.balance))
+    ));
+  });
+  wrap.appendChild(bankCard);
+
+  // Управление лимитом Лимита бюджета
+  const bCard = h('div',{class:'dash-card'},
+    h('div',{class:'settings-label', style:{fontSize:'12px', color:'var(--text3)'}}, 'Ежемесячный лимит трат'),
+    h('input',{type:'number', class:'note-input', style:{marginTop:'6px', marginBottom:'0'}, value:state.budget, onChange:(e)=>{
+      state.budget = Number(e.target.value) || 0; save(); renderHeader(); showToast('Лимит обновлен');
+    }})
+  );
+  wrap.appendChild(bCard);
+
+  // Выбор валюты приложения
+  const currCard = h('div',{class:'dash-card'},
+    h('div',{class:'dash-title'},'Основная валюта'),
+    h('select',{class:'select-custom', onChange:(e)=>{state.currency=e.target.value; save(); render();}},
+      h('option',{value:'₸', selected:state.currency==='₸'},'₸ (Казахстанский Тенге)'),
+      h('option',{value:'$', selected:state.currency==='$'},'$ (Доллар США)'),
+      h('option',{value:'₽', selected:state.currency==='₽'},'₽ (Российский Рубль)')
+    )
+  );
+  wrap.appendChild(currCard);
+
+  // Безопасность: Настройка ПИН-КОДА
+  const pinCard = h('div',{class:'dash-card'},
+    h('div',{class:'dash-title'},'Защита приложения (ПИН-код)'),
+    h('input',{type:'password', maxlength:'4', inputmode:'numeric', class:'note-input', placeholder:'Введите 4 цифры для защиты', value:state.pinCode, onChange:(e)=>{
+      state.pinCode = e.target.value.replace(/[^0-9]/g,'');
+      save(); showToast(state.pinCode ? '🔐 Пароль установлен!' : '🔓 Пароль отключен');
+    }}),
+    h('div',{style:{fontSize:'10px', color:'var(--text4)'}}, 'Оставьте поле пустым, чтобы входить без ввода ПИН-кода.')
+  );
+  wrap.appendChild(pinCard);
+
+  // Сброс всех сохраненных данных
+  wrap.appendChild(h('button',{class:'danger-btn', style:{
+    width:'100%', padding:'14px', borderRadius:'14px', border:'1px solid rgba(255,107,107,0.2)',
+    background:'rgba(255,107,107,0.05)', color:'var(--danger)', fontSize:'13px', fontWeight:'700', marginTop:'10px'
+  }, onClick:()=>{
+    if(confirm('Вы действительно хотите полностью стереть историю операций и настройки?')) {
+      localStorage.clear();
+      state.transactions = [];
+      state.banks = JSON.stringify(DEFAULT_BANKS);
+      state.budget = 200000; state.currency = '₸'; state.pinCode = ''; state.isLocked = false;
+      recalculateBankBalances(); save(); showToast('Данные полностью очищены'); render();
+    }
+  }},'🗑 Сбросить все данные приложения'));
+
+  return wrap;
+}
+
+function renderNav() {
+  const tabs = [
+    {id:'add', icon:'＋', label:'Запись'},
+    {id:'list', icon:'☰', label:'История'},
+    {id:'analytics', icon:'📊', label:'Аналитика'},
+    {id:'settings', icon:'⚙️', label:'Счета'}
+  ];
+  return h('div',{class:'nav'},
+    ...tabs.map(t => h('button',{class:'nav-btn'+(state.view===t.id?' active':''), onClick:()=>{state.view=t.id; render();}},
+      h('span',{class:'ni'}, t.icon), h('span',{class:'nl'}, t.label)
+    ))
+  );
+}
+
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  // Если включен замок безопасности, рендерим только экран блокировки
+  if (state.isLocked && state.pinCode) {
+    app.appendChild(renderLockScreen());
+    if(state.toast) app.appendChild(h('div',{class:'toast'},state.toast));
+    return;
+  }
+
+  app.appendChild(renderHeader());
+
+  switch(state.view) {
+    case 'add': app.appendChild(renderAdd()); break;
+    case 'list': app.appendChild(renderList()); break;
+    case 'analytics': app.appendChild(renderAnalytics()); break;
+    case 'settings': app.appendChild(renderSettings()); break;
+  }
+  app.appendChild(renderNav());
+
+  if(state.toast) {
+    app.appendChild(h('div',{class:'toast'}, state.toast));
+  }
+}
+
+// Первичный запуск
+recalculateBankBalances();
+render();
+</script>
+</body>
+</html>
