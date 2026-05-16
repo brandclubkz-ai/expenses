@@ -1,2 +1,0 @@
-# expenses
-my vibecode
