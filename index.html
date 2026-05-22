@@ -139,12 +139,30 @@ function App() {
   const [vM, setVM] = useState(new Date().getMonth());
   const [vY, setVY] = useState(new Date().getFullYear());
   const [openDays, setOpenDays] = useState({});
+  const aiAutoRef = useState(null);
+
+  // Auto-run AI when switching to AI tab
+  useEffect(() => {
+    if (tab === "ai" && !aiLoading && data && data.transactions?.length > 0) {
+      const lastRun = aiAutoRef[0];
+      const now = Date.now();
+      if (lastRun && now - lastRun < 60000) return; // don't re-run within 1 min
+      aiAutoRef[0] = now;
+      const autoQ = `Дай краткий ежедневный финансовый отчёт:
+1. Сколько потрачено сегодня (${td()}) и на что — оцени, много или нормально.
+2. Сколько потрачено за текущий месяц — сравни с бюджетом по каждой категории. Если что-то превышено — выдели.
+3. Сколько осталось до конца месяца по бюджету.
+4. Краткий совет что делать.
+Будь кратким, используй эмодзи, пиши на русском.`;
+      runAI(autoQ);
+    }
+  }, [tab]);
 
   useEffect(() => {
     (() => {
       try { const r = LS.get("fv5-data"); if (r) setData(r); else setData(INITIAL_DATA); } catch { setData(INITIAL_DATA); }
-      try { const r = LS.get("fv5-hist"); if (r) setHistory(r); } catch {}
-      try { const r = LS.get("fv5-ai"); if (r) setAiResult(r); } catch {}
+      try { const r = LS.get("fv5-hist"); if (r?.value) setHistory(JSON.parse(r.value)); } catch {}
+      try { const r = LS.get("fv5-ai"); if (r?.value) setAiResult(r.value); } catch {}
       const k = LS.get("fv5-key"); if (k) setAiKey(k);
       setLoaded(true);
     })();
@@ -381,17 +399,15 @@ function App() {
         <button style={S.addBtn} onClick={() => { setModal("debt"); setMf({}); }}>+ Должник</button></>}
 
       {/* AI */}
-      {tab === "ai" && <><Card bg="linear-gradient(135deg,#0f0a30,#1a1260)">
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}><span style={{ fontSize: 22 }}>🧠</span><div><div style={{ fontWeight: 700, color: "#c7d2fe", fontSize: 15 }}>AI Аналитик</div></div></div>
-        {showKey || !aiKey ? <div style={{ marginBottom: 10 }}><div style={{ fontSize: 11, color: "#818cf8", marginBottom: 6 }}>Anthropic API ключ:</div><div style={{ display: "flex", gap: 6 }}><input type="password" value={aiKey} onChange={e => setAiKey(e.target.value)} placeholder="sk-ant-..." style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "1px solid #252350", background: "#0c0a2a", color: "#fff", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} /><button onClick={() => { LS.set("fv5-key", aiKey); setShowKey(false); }} style={{ padding: "9px 14px", borderRadius: 10, border: "none", background: "#6366f1", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>✓</button></div></div> : <div style={{ fontSize: 10, color: "#3a3a4a", marginBottom: 8, cursor: "pointer" }} onClick={() => setShowKey(true)}>🔑 Ключ сохранён</div>}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 10 }}>
-          {[{ l: "📊 Анализ дня", q: `Проанализируй сегодняшние траты (${td()}). Сравни с бюджетом. Если что-то превышено — укажи.` }, { l: "📅 За неделю", q: "Анализ за 7 дней. Тренды, что превышено." }, { l: "📈 За месяц", q: "Полный анализ месяца vs бюджет. Превышения." }, { l: "💡 Экономия", q: "Где сэкономить? Конкретные суммы." }, { l: "🎯 Полный", q: "Полный финотчёт: активы, долги, бюджет, план." }].map((b, i) => <button key={i} onClick={() => runAI(b.q)} disabled={aiLoading} style={{ padding: "6px 10px", borderRadius: 9, border: "1px solid #252350", background: "#0c0a2a", color: "#a5b4fc", fontSize: 11, cursor: aiLoading ? "wait" : "pointer", fontFamily: "'DM Sans',sans-serif", opacity: aiLoading ? 0.5 : 1 }}>{b.l}</button>)}
-        </div>
-        <div style={{ display: "flex", gap: 6 }}><input type="text" value={aiQuestion} onChange={e => setAiQuestion(e.target.value)} onKeyDown={e => e.key === "Enter" && aiQuestion && runAI(aiQuestion)} placeholder="Свой вопрос..." disabled={aiLoading} style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "1px solid #252350", background: "#0c0a2a", color: "#fff", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} /><button onClick={() => aiQuestion && runAI(aiQuestion)} disabled={aiLoading || !aiQuestion} style={{ padding: "9px 16px", borderRadius: 10, border: "none", background: aiLoading ? "#2a2745" : "#6366f1", color: "#fff", fontSize: 14, cursor: aiLoading ? "wait" : "pointer", fontWeight: 600 }}>{aiLoading ? "..." : "→"}</button></div>
-      </Card>
-        {warnings.length > 0 && !aiLoading && !aiResult && <Card bg="#1a1015"><div style={{ fontSize: 12, fontWeight: 600, color: "#f87171", marginBottom: 6 }}>⚠️ Превышения бюджета:</div>{warnings.map((w, i) => <div key={i} style={{ fontSize: 12, color: "#fca5a5", marginBottom: 2 }}>{w.name}: потрачено {fmt(w.spent)} из {fmt(w.limit)} ₸ (+{fmt(w.over)})</div>)}</Card>}
-        {aiLoading && <Card><div style={{ display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 18, height: 18, border: "2px solid #6366f1", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} /><span style={{ color: "#818cf8", fontSize: 12 }}>Анализирую...</span></div><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></Card>}
+      {tab === "ai" && <>
+        {aiLoading && <Card bg="linear-gradient(135deg,#0f0a30,#1a1260)"><div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 20, height: 20, border: "2px solid #6366f1", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} /><span style={{ color: "#c7d2fe", fontSize: 14 }}>🧠 Анализирую финансы...</span></div><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></Card>}
         {aiResult && !aiLoading && <Card><div style={{ fontSize: 13, color: "#d0d0e8", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{aiResult}</div></Card>}
+        {!aiLoading && !aiResult && warnings.length > 0 && <Card bg="#1a1015"><div style={{ fontSize: 12, fontWeight: 600, color: "#f87171", marginBottom: 6 }}>⚠️ Превышения бюджета:</div>{warnings.map((w, i) => <div key={i} style={{ fontSize: 12, color: "#fca5a5", marginBottom: 2 }}>{w.name}: {fmt(w.spent)} / {fmt(w.limit)} ₸ (+{fmt(w.over)})</div>)}</Card>}
+        {!aiLoading && <Card bg="linear-gradient(135deg,#0f0a30,#1a1260)">
+          {showKey || !aiKey ? <div style={{ marginBottom: 10 }}><div style={{ fontSize: 11, color: "#818cf8", marginBottom: 6 }}>Anthropic API ключ:</div><div style={{ display: "flex", gap: 6 }}><input type="password" value={aiKey} onChange={e => setAiKey(e.target.value)} placeholder="sk-ant-..." style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "1px solid #252350", background: "#0c0a2a", color: "#fff", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} /><button onClick={() => { LS.set("fv5-key", aiKey); setShowKey(false); }} style={{ padding: "9px 14px", borderRadius: 10, border: "none", background: "#6366f1", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>✓</button></div></div> : <div style={{ fontSize: 10, color: "#3a3a4a", marginBottom: 8, cursor: "pointer" }} onClick={() => setShowKey(true)}>🔑 Ключ сохранён</div>}
+          <div style={{ display: "flex", gap: 6 }}><input type="text" value={aiQuestion} onChange={e => setAiQuestion(e.target.value)} onKeyDown={e => e.key === "Enter" && aiQuestion && runAI(aiQuestion)} placeholder="Задай вопрос..." style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "1px solid #252350", background: "#0c0a2a", color: "#fff", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} /><button onClick={() => aiQuestion && runAI(aiQuestion)} disabled={!aiQuestion} style={{ padding: "9px 16px", borderRadius: 10, border: "none", background: "#6366f1", color: "#fff", fontSize: 14, cursor: "pointer", fontWeight: 600 }}>→</button></div>
+          <button onClick={() => { aiAutoRef[0] = null; setAiResult(""); }} style={{ marginTop: 8, background: "none", border: "1px dashed #252350", borderRadius: 8, color: "#818cf8", padding: "6px 12px", fontSize: 11, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", width: "100%" }}>🔄 Обновить анализ</button>
+        </Card>}
       </>}
 
       {/* LOG */}
