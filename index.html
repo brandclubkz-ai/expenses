@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#06061a">
@@ -10,490 +10,341 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body,#root{height:100%;background:#06061a;color:#e2e0f0;font-family:'DM Sans',sans-serif}
-input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-input[type=number]{-moz-appearance:textfield}
-@keyframes spin{to{transform:rotate(360deg)}}
-</style>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}html,body,#root{height:100%;background:#06061a;color:#e2e0f0;font-family:'DM Sans',sans-serif}input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}input[type=number]{-moz-appearance:textfield}@keyframes spin{to{transform:rotate(360deg)}}</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 </head>
-<body>
-<div id="root"></div>
+<body><div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useCallback, useRef } = React;
+const{useState,useEffect,useCallback}=React;
+const LS={get(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 
-// --- Storage helper (localStorage) ---
-const LS = {
-  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+const INITIAL_DATA={
+  banks:[
+    {id:"kaspi",name:"Kaspi Bank",icon:"🔴",accounts:[{id:"kaspi_main",name:"Основной счёт",balance:0}]},
+    {id:"otbasy",name:"Отбасы Банк",icon:"🏠",accounts:[
+      {id:"otb1",name:"Депозит #1 (02.12.2025)",balance:105020,monthlyGoal:75000},
+      {id:"otb2",name:"Депозит #2 (13.09.2024)",balance:845775,monthlyGoal:75000},
+      {id:"otb3",name:"Депозит #3 (20.04.2026)",balance:20000,monthlyGoal:75000},
+    ]},
+    {id:"forte",name:"Forte Bank",icon:"🟢",accounts:[{id:"forte_usd",name:"Доллары",balance:1055,currency:"$",avgPrice:467}]},
+  ],
+  debts:[
+    {id:"d1",name:"Брат",amount:1251000},
+    {id:"d2",name:"Сестра",amount:900000},
+    {id:"d3",name:"Друг",amount:1415000},
+    {id:"d4",name:"Должник",amount:1000000},
+  ],
+  budget:[
+    {id:"e1",name:"Ипотека",amount:225000,icon:"🏠"},
+    {id:"e2",name:"Еда и кафе",amount:250000,icon:"🍔"},
+    {id:"e3",name:"Бухгалтер",amount:20000,icon:"📋"},
+    {id:"e4",name:"Другое",amount:50000,icon:"🏷️"},
+    {id:"e5",name:"Коммуналка и интернет",amount:30000,icon:"💡"},
+    {id:"e6",name:"Подписки и связь",amount:20000,icon:"📱"},
+  ],
+  income:{salary:703000,bonus:527000,additional:150000},
+  usdRate:467,
+  transactions:[
+    {id:"t1",type:"expense",category:"food",amount:185572,note:"",date:"2026-05-20"},
+    {id:"t2",type:"expense",category:"entertainment",amount:65490,note:"",date:"2026-05-18"},
+    {id:"t3",type:"expense",category:"cafe",amount:64440,note:"",date:"2026-05-19"},
+    {id:"t4",type:"expense",category:"shopping",amount:20150,note:"",date:"2026-05-17"},
+    {id:"t5",type:"expense",category:"accountant",amount:20000,note:"",date:"2026-05-01"},
+    {id:"t6",type:"expense",category:"subscriptions",amount:17070,note:"",date:"2026-05-01"},
+    {id:"t7",type:"expense",category:"gifts",amount:16400,note:"",date:"2026-05-15"},
+    {id:"t8",type:"expense",category:"utilities",amount:15320,note:"",date:"2026-05-05"},
+    {id:"t9",type:"expense",category:"telecom",amount:13875,note:"",date:"2026-05-01"},
+    {id:"t10",type:"expense",category:"taxi",amount:13720,note:"",date:"2026-05-16"},
+    {id:"t11",type:"expense",category:"transport",amount:620,note:"",date:"2026-05-14"},
+  ],
 };
 
-const INITIAL_DATA = {
-  banks: [
-    { id: "kaspi", name: "Kaspi Bank", icon: "🔴", accounts: [
-      { id: "kaspi_main", name: "Основной счёт", balance: 0 },
-    ]},
-    { id: "otbasy", name: "Отбасы Банк", icon: "🏠", accounts: [
-      { id: "otb1", name: "Депозит #1 (02.12.2025)", balance: 105020, monthlyGoal: 75000 },
-      { id: "otb2", name: "Депозит #2 (13.09.2024)", balance: 845775, monthlyGoal: 75000 },
-      { id: "otb3", name: "Депозит #3 (20.04.2026)", balance: 20000, monthlyGoal: 75000 },
-    ]},
-    { id: "forte", name: "Forte Bank", icon: "🟢", accounts: [
-      { id: "forte_usd", name: "Доллары", balance: 1055, currency: "$", avgPrice: 467 },
-    ]},
-  ],
-  debts: [
-    { id: "d1", name: "Брат", amount: 1251000 },
-    { id: "d2", name: "Сестра", amount: 900000 },
-    { id: "d3", name: "Друг", amount: 1415000 },
-    { id: "d4", name: "Должник", amount: 1000000 },
-  ],
-  expenses: [
-    { id: "e1", name: "Ипотека", amount: 225000, icon: "🏠" },
-    { id: "e2", name: "Еда и кафе", amount: 250000, icon: "🍔" },
-    { id: "e3", name: "Бухгалтер", amount: 20000, icon: "📋" },
-    { id: "e4", name: "Другое", amount: 50000, icon: "🏷️" },
-    { id: "e5", name: "Коммуналка и интернет", amount: 30000, icon: "💡" },
-    { id: "e6", name: "Подписки и связь", amount: 20000, icon: "📱" },
-  ],
-  income: { salary: 703000, bonus: 527000, additional: 150000 },
-  usdRate: 467,
-};
+const CATS=[
+  {id:"food",name:"Продукты",icon:"🛒",color:"#ef4444"},
+  {id:"cafe",name:"Кафе",icon:"☕",color:"#f59e0b"},
+  {id:"entertainment",name:"Развлечения",icon:"🎉",color:"#f97316"},
+  {id:"shopping",name:"Покупки",icon:"🛍️",color:"#eab308"},
+  {id:"transport",name:"Транспорт",icon:"🚗",color:"#a855f7"},
+  {id:"taxi",name:"Такси",icon:"🚕",color:"#ec4899"},
+  {id:"health",name:"Здоровье",icon:"💊",color:"#14b8a6"},
+  {id:"clothes",name:"Одежда",icon:"👕",color:"#6366f1"},
+  {id:"housing",name:"Ипотека",icon:"🏠",color:"#ef4444"},
+  {id:"utilities",name:"Ком услуги",icon:"🔧",color:"#8b5cf6"},
+  {id:"subscriptions",name:"Подписки",icon:"📱",color:"#06b6d4"},
+  {id:"telecom",name:"Связь",icon:"📞",color:"#f43f5e"},
+  {id:"gifts",name:"Подарки",icon:"🎁",color:"#3b82f6"},
+  {id:"accountant",name:"Бухгалтер",icon:"📋",color:"#22c55e"},
+  {id:"education",name:"Образование",icon:"📚",color:"#0ea5e9"},
+  {id:"other",name:"Другое",icon:"🏷️",color:"#64748b"},
+];
+const INCOME_CATS=[
+  {id:"salary",name:"Зарплата",icon:"💼",color:"#22c55e"},
+  {id:"freelance",name:"Доп. доход",icon:"💻",color:"#14b8a6"},
+  {id:"bonus_in",name:"Премия",icon:"🎯",color:"#6366f1"},
+  {id:"gift_in",name:"Подарок",icon:"🎁",color:"#f59e0b"},
+  {id:"return",name:"Возврат долга",icon:"💸",color:"#06b6d4"},
+  {id:"other_in",name:"Другое",icon:"💰",color:"#64748b"},
+];
 
-function fmt(n) { return new Intl.NumberFormat("ru-RU").format(Math.round(Math.abs(n))); }
+function fmt(n){return new Intl.NumberFormat("ru-RU").format(Math.round(Math.abs(n)))}
+function td(){return new Date().toISOString().slice(0,10)}
+function gc(id){return[...CATS,...INCOME_CATS].find(c=>c.id===id)||{name:id,icon:"📌",color:"#64748b"}}
 
-function InlineAmountInput({ onSubmit, placeholder, btnLabel, btnColor, compact }) {
-  const [val, setVal] = useState("");
-  const submit = () => { const n = parseFloat(val); if (!n) return; onSubmit(n); setVal(""); };
-  return (
-    <div style={{ display: "flex", gap: 6, marginTop: compact ? 6 : 10 }}>
-      <input type="number" value={val} onChange={e => setVal(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()}
-        placeholder={placeholder || "Сумма"}
-        style={{ flex: 1, padding: "8px 12px", borderRadius: 10, border: "1px solid #2a2745", background: "#0c0a1a", color: "#fff", fontSize: 14, fontFamily: "'DM Sans',sans-serif", minWidth: 0 }} />
-      <button onClick={submit} style={{ padding: "8px 14px", borderRadius: 10, border: "none", background: btnColor || "#6366f1", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", whiteSpace: "nowrap" }}>
-        {btnLabel || "+"}
-      </button>
-    </div>
-  );
+function Inp({onSubmit,placeholder,btnLabel,btnColor,compact}){
+  const[v,setV]=useState("");
+  return <div style={{display:"flex",gap:6,marginTop:compact?6:10}}>
+    <input type="number" value={v} onChange={e=>setV(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){const n=parseFloat(v);if(n){onSubmit(n);setV("")}}}} placeholder={placeholder} style={IS.inp}/>
+    <button onClick={()=>{const n=parseFloat(v);if(n){onSubmit(n);setV("")}}} style={{...IS.btn,background:btnColor||"#6366f1"}}>{btnLabel||"+"}</button>
+  </div>
 }
-
-function UsdBuyInput({ onBuy, onSell, currentRate }) {
-  const [amount, setAmount] = useState("");
-  const [rate, setRate] = useState(currentRate ? String(currentRate) : "");
-  const totalTg = (parseFloat(amount) || 0) * (parseFloat(rate) || 0);
-  return (
-    <div style={{ marginTop: 12 }}>
-      <div style={{ display: "flex", gap: 6 }}>
-        <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Сумма $"
-          style={{ flex: 1, padding: "8px 12px", borderRadius: 10, border: "1px solid #2a2745", background: "#0c0a1a", color: "#fff", fontSize: 14, fontFamily: "'DM Sans',sans-serif", minWidth: 0 }} />
-        <input type="number" value={rate} onChange={e => setRate(e.target.value)} placeholder="Курс ₸/$"
-          style={{ width: 90, padding: "8px 10px", borderRadius: 10, border: "1px solid #2a2745", background: "#0c0a1a", color: "#fbbf24", fontSize: 14, fontFamily: "'DM Sans',sans-serif", textAlign: "center" }} />
-      </div>
-      {totalTg > 0 && <div style={{ fontSize: 11, color: "#a08a3a", marginTop: 4, textAlign: "right" }}>= {fmt(totalTg)} ₸</div>}
-      <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-        <button onClick={() => { const a = parseFloat(amount), r = parseFloat(rate); if (!a || !r) return; onBuy(a, r); setAmount(""); setRate(currentRate ? String(currentRate) : ""); }}
-          style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "none", background: "#22804a", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Купил $</button>
-        <button onClick={() => { const a = parseFloat(amount); if (!a) return; onSell(a); setAmount(""); setRate(currentRate ? String(currentRate) : ""); }}
-          style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "none", background: "#9f3040", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Продал $</button>
-      </div>
+function UsdInp({onBuy,onSell,currentRate}){
+  const[a,setA]=useState("");const[r,setR]=useState(currentRate?String(currentRate):"");
+  const tot=(parseFloat(a)||0)*(parseFloat(r)||0);
+  return <div style={{marginTop:12}}>
+    <div style={{display:"flex",gap:6}}><input type="number" value={a} onChange={e=>setA(e.target.value)} placeholder="Сумма $" style={IS.inp}/><input type="number" value={r} onChange={e=>setR(e.target.value)} placeholder="Курс" style={{...IS.inp,width:80,flex:"none",color:"#fbbf24",textAlign:"center"}}/></div>
+    {tot>0&&<div style={{fontSize:11,color:"#a08a3a",marginTop:3,textAlign:"right"}}>= {fmt(tot)} ₸</div>}
+    <div style={{display:"flex",gap:6,marginTop:6}}>
+      <button onClick={()=>{const am=parseFloat(a),rt=parseFloat(r);if(am&&rt){onBuy(am,rt);setA("");setR(currentRate?String(currentRate):"")}}} style={{...IS.btn,flex:1,background:"#22804a"}}>Купил $</button>
+      <button onClick={()=>{const am=parseFloat(a);if(am){onSell(am);setA("")}}} style={{...IS.btn,flex:1,background:"#9f3040"}}>Продал $</button>
     </div>
-  );
+  </div>
 }
+const IS={inp:{flex:1,padding:"8px 12px",borderRadius:10,border:"1px solid #2a2745",background:"#0c0a1a",color:"#fff",fontSize:14,fontFamily:"'DM Sans',sans-serif",minWidth:0},btn:{padding:"8px 14px",borderRadius:10,border:"none",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap"}};
 
-function App() {
-  const [data, setData] = useState(null);
-  const [loaded, setLoaded] = useState(false);
-  const [tab, setTab] = useState("overview");
-  const [history, setHistory] = useState([]);
-  const [aiResult, setAiResult] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiQuestion, setAiQuestion] = useState("");
-  const [aiKey, setAiKey] = useState("");
-  const [showKeyInput, setShowKeyInput] = useState(false);
-  const [modal, setModal] = useState(null);
-  const [modalFields, setModalFields] = useState({});
+function App(){
+  const[data,setData]=useState(null);
+  const[loaded,setLoaded]=useState(false);
+  const[tab,setTab]=useState("transactions");
+  const[history,setHistory]=useState([]);
+  const[aiResult,setAiResult]=useState("");
+  const[aiLoading,setAiLoading]=useState(false);
+  const[aiQuestion,setAiQuestion]=useState("");
+  const[aiKey,setAiKey]=useState("");
+  const[showKey,setShowKey]=useState(false);
+  const[modal,setModal]=useState(null);
+  const[mf,setMf]=useState({});
+  const[txModal,setTxModal]=useState(false);
+  const[txType,setTxType]=useState("expense");
+  const[txCat,setTxCat]=useState("");
+  const[txAmt,setTxAmt]=useState("");
+  const[txNote,setTxNote]=useState("");
+  const[txDate,setTxDate]=useState(td());
+  const[vM,setVM]=useState(new Date().getMonth());
+  const[vY,setVY]=useState(new Date().getFullYear());
 
-  useEffect(() => {
-    const d = LS.get("fv3-data"); setData(d || INITIAL_DATA);
-    const h = LS.get("fv3-history"); if (h) setHistory(h);
-    const ai = LS.get("fv3-ai"); if (ai) setAiResult(ai);
-    const k = LS.get("fv3-aikey"); if (k) setAiKey(k);
+  useEffect(()=>{
+    const d=LS.get("fv4-data");setData(d||INITIAL_DATA);
+    const h=LS.get("fv4-hist");if(h)setHistory(h);
+    const a=LS.get("fv4-ai");if(a)setAiResult(a);
+    const k=LS.get("fv4-key");if(k)setAiKey(k);
     setLoaded(true);
-  }, []);
+  },[]);
 
-  const save = useCallback((d, h) => {
-    LS.set("fv3-data", d);
-    if (h) LS.set("fv3-history", h);
-  }, []);
+  const save=(d,h)=>{LS.set("fv4-data",d);if(h)LS.set("fv4-hist",h)};
+  const log=(t)=>{const nh=[{date:td(),time:new Date().toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}),text:t},...history].slice(0,100);setHistory(nh);return nh};
 
-  const log = (text) => {
-    const nh = [{ date: new Date().toISOString().slice(0, 10), time: new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }), text }, ...history].slice(0, 80);
-    setHistory(nh); return nh;
+  const addTx=()=>{
+    if(!txAmt||!txCat)return;
+    const tx={id:Date.now().toString(),type:txType,category:txCat,amount:parseFloat(txAmt),note:txNote,date:txDate};
+    const nd={...data,transactions:[...(data.transactions||[]),tx]};setData(nd);
+    const c=gc(txCat);const nh=log(`${txType==="income"?"📥":"📤"} ${c.icon} ${c.name}: ${txType==="income"?"+":"-"}${fmt(tx.amount)} ₸${txNote?" — "+txNote:""}`);
+    save(nd,nh);setTxAmt("");setTxNote("");setTxCat("");setTxDate(td());setTxModal(false);
+  };
+  const deleteTx=(id)=>{const nd={...data,transactions:data.transactions.filter(t=>t.id!==id)};setData(nd);save(nd)};
+
+  const updateAcc=(bId,aId,delta,note)=>{
+    const nd={...data,banks:data.banks.map(b=>b.id===bId?{...b,accounts:b.accounts.map(a=>a.id===aId?{...a,balance:a.balance+delta}:a)}:b)};
+    setData(nd);const bank=data.banks.find(b=>b.id===bId);const acc=bank.accounts.find(a=>a.id===aId);
+    const nh=log(`${bank.icon} ${acc.name}: ${delta>0?"+":""}${fmt(delta)} ${acc.currency||"₸"}${note?" — "+note:""}`);save(nd,nh);
+  };
+  const setAccBal=(bId,aId,v)=>{
+    const nd={...data,banks:data.banks.map(b=>b.id===bId?{...b,accounts:b.accounts.map(a=>a.id===aId?{...a,balance:v}:a)}:b)};
+    setData(nd);const bank=data.banks.find(b=>b.id===bId);const acc=bank.accounts.find(a=>a.id===aId);
+    const nh=log(`${bank.icon} ${acc.name}: → ${fmt(v)} ${acc.currency||"₸"}`);save(nd,nh);
+  };
+  const buyUsd=(bId,aId,amt,rate)=>{
+    const nd={...data,banks:data.banks.map(b=>b.id===bId?{...b,accounts:b.accounts.map(a=>{if(a.id!==aId)return a;const oT=a.balance*(a.avgPrice||0),nB=a.balance+amt;return{...a,balance:nB,avgPrice:nB>0?Math.round((oT+amt*rate)/nB*100)/100:rate}})}:b)};
+    setData(nd);const bank=data.banks.find(b=>b.id===bId);const nh=log(`${bank.icon} Купил $${fmt(amt)} по ${fmt(rate)} ₸/$`);save(nd,nh);
+  };
+  const sellUsd=(bId,aId,amt)=>{
+    const nd={...data,banks:data.banks.map(b=>b.id===bId?{...b,accounts:b.accounts.map(a=>a.id!==aId?a:{...a,balance:Math.max(0,a.balance-amt)})}:b)};
+    setData(nd);const bank=data.banks.find(b=>b.id===bId);const nh=log(`${bank.icon} Продал $${fmt(amt)}`);save(nd,nh);
   };
 
-  const updateAccount = (bankId, accId, delta, note) => {
-    const nd = { ...data, banks: data.banks.map(b => b.id === bankId ? { ...b, accounts: b.accounts.map(a => a.id === accId ? { ...a, balance: a.balance + delta } : a) } : b) };
-    setData(nd);
-    const bank = data.banks.find(b => b.id === bankId); const acc = bank.accounts.find(a => a.id === accId);
-    const nh = log(`${bank.icon} ${acc.name}: ${delta > 0 ? "+" : ""}${fmt(delta)} ${acc.currency || "₸"}${note ? " — " + note : ""}`);
-    save(nd, nh);
-  };
+  const returnDebt=(id,amt)=>{const nd={...data,debts:data.debts.map(d=>d.id===id?{...d,amount:Math.max(0,d.amount-amt)}:d)};setData(nd);const debt=data.debts.find(d=>d.id===id);const nh=log(`💸 ${debt.name} вернул ${fmt(amt)} ₸`);save(nd,nh)};
+  const closeDebt=(id)=>{const debt=data.debts.find(d=>d.id===id);const nd={...data,debts:data.debts.filter(d=>d.id!==id)};setData(nd);const nh=log(`✅ ${debt.name}: закрыт`);save(nd,nh)};
+  const addDebt=()=>{if(!mf.name||!mf.amount)return;const nd={...data,debts:[...data.debts,{id:Date.now().toString(),name:mf.name,amount:parseFloat(mf.amount)}]};setData(nd);save(nd);setModal(null);setMf({})};
+  const addAccount=()=>{if(!mf.bankId||!mf.name)return;const nd={...data,banks:data.banks.map(b=>b.id===mf.bankId?{...b,accounts:[...b.accounts,{id:Date.now().toString(),name:mf.name,balance:parseFloat(mf.balance)||0,currency:mf.currency||"₸",monthlyGoal:parseFloat(mf.goal)||0}]}:b)};setData(nd);save(nd);setModal(null);setMf({})};
+  const updateBudget=(id,v)=>{const nd={...data,budget:data.budget.map(e=>e.id===id?{...e,amount:v}:e)};setData(nd);save(nd)};
+  const deleteBudget=(id)=>{const nd={...data,budget:data.budget.filter(e=>e.id!==id)};setData(nd);save(nd)};
+  const addBudgetItem=()=>{if(!mf.name||!mf.amount)return;const nd={...data,budget:[...data.budget,{id:Date.now().toString(),name:mf.name,amount:parseFloat(mf.amount),icon:mf.icon||"🏷️"}]};setData(nd);save(nd);setModal(null);setMf({})};
+  const updateIncome=(f,v)=>{const nd={...data,income:{...data.income,[f]:v}};setData(nd);save(nd)};
+  const updateRate=(r)=>{const nd={...data,usdRate:r};setData(nd);save(nd)};
 
-  const setAccountBalance = (bankId, accId, newBal) => {
-    const nd = { ...data, banks: data.banks.map(b => b.id === bankId ? { ...b, accounts: b.accounts.map(a => a.id === accId ? { ...a, balance: newBal } : a) } : b) };
-    setData(nd);
-    const bank = data.banks.find(b => b.id === bankId); const acc = bank.accounts.find(a => a.id === accId);
-    const nh = log(`${bank.icon} ${acc.name}: баланс → ${fmt(newBal)} ${acc.currency || "₸"}`);
-    save(nd, nh);
-  };
+  const txs=data?.transactions||[];
+  const mTxs=txs.filter(t=>{const d=new Date(t.date);return d.getMonth()===vM&&d.getFullYear()===vY});
+  const mExp=mTxs.filter(t=>t.type==="expense");const mInc=mTxs.filter(t=>t.type==="income");
+  const tME=mExp.reduce((s,t)=>s+t.amount,0);const tMI=mInc.reduce((s,t)=>s+t.amount,0);
+  const eBC={};mExp.forEach(t=>{eBC[t.category]=(eBC[t.category]||0)+t.amount});
+  const sC=Object.entries(eBC).sort((a,b)=>b[1]-a[1]);
+  const todTxs=txs.filter(t=>t.date===td());const todE=todTxs.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
+  const allA=data?data.banks.flatMap(b=>b.accounts.map(a=>({...a,bankId:b.id,bankIcon:b.icon}))):[];
+  const tTg=allA.filter(a=>(a.currency||"₸")==="₸").reduce((s,a)=>s+a.balance,0);
+  const tUsd=allA.filter(a=>a.currency==="$").reduce((s,a)=>s+a.balance,0);
+  const tInvTg=tUsd*(data?.usdRate||467);const tDebts=data?data.debts.reduce((s,d)=>s+d.amount,0):0;
+  const tBudget=data?data.budget.reduce((s,e)=>s+e.amount,0):0;
+  const mIncome=data?data.income.salary+data.income.additional+Math.round(data.income.bonus/3):0;
+  const sGoal=allA.filter(a=>a.monthlyGoal).reduce((s,a)=>s+a.monthlyGoal,0);
+  const freeUsd=mIncome-tBudget-sGoal;const nw=tTg+tInvTg+tDebts;
+  const MO=["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
 
-  const buyUsd = (bankId, accId, usdAmount, rate) => {
-    const nd = { ...data, banks: data.banks.map(b => b.id === bankId ? { ...b, accounts: b.accounts.map(a => {
-      if (a.id !== accId) return a;
-      const oldTotal = a.balance * (a.avgPrice || 0), newBalance = a.balance + usdAmount;
-      const newAvg = newBalance > 0 ? (oldTotal + usdAmount * rate) / newBalance : rate;
-      return { ...a, balance: newBalance, avgPrice: Math.round(newAvg * 100) / 100 };
-    }) } : b) };
-    setData(nd);
-    const bank = data.banks.find(b => b.id === bankId); const acc = bank.accounts.find(a => a.id === accId);
-    const newBal = acc.balance + usdAmount, oldT = acc.balance * (acc.avgPrice || 0);
-    const newAvg = newBal > 0 ? Math.round((oldT + usdAmount * rate) / newBal * 100) / 100 : rate;
-    const nh = log(`${bank.icon} Купил $${fmt(usdAmount)} по ${fmt(rate)} ₸/$ (${fmt(usdAmount * rate)} ₸) — сред: ${fmt(newAvg)} ₸/$`);
-    save(nd, nh);
-  };
-
-  const sellUsd = (bankId, accId, usdAmount) => {
-    const nd = { ...data, banks: data.banks.map(b => b.id === bankId ? { ...b, accounts: b.accounts.map(a => a.id !== accId ? a : { ...a, balance: Math.max(0, a.balance - usdAmount) }) } : b) };
-    setData(nd);
-    const bank = data.banks.find(b => b.id === bankId);
-    const nh = log(`${bank.icon} Продал $${fmt(usdAmount)}`); save(nd, nh);
-  };
-
-  const updateDebt = (id, delta) => {
-    const nd = { ...data, debts: data.debts.map(d => d.id === id ? { ...d, amount: Math.max(0, d.amount - delta) } : d) };
-    setData(nd); const debt = data.debts.find(d => d.id === id);
-    const nh = log(`💸 ${debt.name} вернул(а) ${fmt(delta)} ₸ (осталось: ${fmt(Math.max(0, debt.amount - delta))} ₸)`); save(nd, nh);
-  };
-
-  const deleteDebt = (id) => {
-    const debt = data.debts.find(d => d.id === id);
-    const nd = { ...data, debts: data.debts.filter(d => d.id !== id) };
-    setData(nd); const nh = log(`✅ ${debt.name}: долг закрыт`); save(nd, nh);
-  };
-
-  const addDebt = () => {
-    if (!modalFields.name || !modalFields.amount) return;
-    const nd = { ...data, debts: [...data.debts, { id: Date.now().toString(), name: modalFields.name, amount: parseFloat(modalFields.amount) }] };
-    setData(nd); const nh = log(`📌 Новый долг: ${modalFields.name} — ${fmt(parseFloat(modalFields.amount))} ₸`);
-    save(nd, nh); setModal(null); setModalFields({});
-  };
-
-  const addAccount = () => {
-    if (!modalFields.bankId || !modalFields.name) return;
-    const nd = { ...data, banks: data.banks.map(b => b.id === modalFields.bankId ? { ...b, accounts: [...b.accounts, { id: Date.now().toString(), name: modalFields.name, balance: parseFloat(modalFields.balance) || 0, currency: modalFields.currency || "₸", monthlyGoal: parseFloat(modalFields.goal) || 0 }] } : b) };
-    setData(nd); save(nd); setModal(null); setModalFields({});
-  };
-
-  const addExpense = () => {
-    if (!modalFields.name || !modalFields.amount) return;
-    const nd = { ...data, expenses: [...data.expenses, { id: Date.now().toString(), name: modalFields.name, amount: parseFloat(modalFields.amount), icon: modalFields.icon || "🏷️" }] };
-    setData(nd); save(nd); setModal(null); setModalFields({});
-  };
-
-  const deleteExpense = (id) => { const nd = { ...data, expenses: data.expenses.filter(e => e.id !== id) }; setData(nd); save(nd); };
-  const updateExpense = (id, v) => { const nd = { ...data, expenses: data.expenses.map(e => e.id === id ? { ...e, amount: v } : e) }; setData(nd); save(nd); };
-  const updateIncome = (f, v) => { const nd = { ...data, income: { ...data.income, [f]: v } }; setData(nd); save(nd); };
-  const updateRate = (r) => { const nd = { ...data, usdRate: r }; setData(nd); save(nd); };
-
-  const allAccounts = data ? data.banks.flatMap(b => b.accounts.map(a => ({ ...a, bankId: b.id, bankName: b.name, bankIcon: b.icon }))) : [];
-  const totalTg = allAccounts.filter(a => (a.currency || "₸") === "₸").reduce((s, a) => s + a.balance, 0);
-  const totalUsd = allAccounts.filter(a => a.currency === "$").reduce((s, a) => s + a.balance, 0);
-  const totalInvestTg = totalUsd * (data?.usdRate || 467);
-  const totalDebts = data ? data.debts.reduce((s, d) => s + d.amount, 0) : 0;
-  const totalExp = data ? data.expenses.reduce((s, e) => s + e.amount, 0) : 0;
-  const monthlyIncome = data ? data.income.salary + data.income.additional + Math.round(data.income.bonus / 3) : 0;
-  const monthlySavingsGoal = allAccounts.filter(a => a.monthlyGoal).reduce((s, a) => s + a.monthlyGoal, 0);
-  const freeForUsd = monthlyIncome - totalExp - monthlySavingsGoal;
-  const netWorth = totalTg + totalInvestTg + totalDebts;
-
-  const runAI = async (question) => {
-    if (!aiKey) { setShowKeyInput(true); return; }
-    setAiLoading(true); setAiResult("");
-    const ctx = JSON.stringify({ banks: data.banks.map(b => ({ name: b.name, accounts: b.accounts.map(a => ({ name: a.name, balance: a.balance, currency: a.currency || "₸", monthlyGoal: a.monthlyGoal || 0, avgPrice: a.avgPrice || null })) })), debts: data.debts, expenses: data.expenses, income: data.income, usdRate: data.usdRate, computed: { totalTg, totalUsd, totalInvestTg, totalDebts, totalExp, monthlyIncome, monthlySavingsGoal, freeForUsd, netWorth } });
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST", headers: { "Content-Type": "application/json", "x-api-key": aiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000,
-          system: "Ты — финансовый AI-аналитик. Отвечай кратко, по делу, на русском. Используй цифры из данных. Давай конкретные советы. Форматируй красиво с эмодзи. Данные:\n" + ctx,
-          messages: [{ role: "user", content: question || "Дай полный анализ моего финансового состояния, советы по оптимизации, и оценку рисков." }],
-        }),
-      });
-      const d = await res.json();
-      if (d.error) { setAiResult("Ошибка API: " + (d.error.message || JSON.stringify(d.error))); }
-      else { const text = d.content?.map(c => c.text || "").join("") || "Нет ответа"; setAiResult(text); LS.set("fv3-ai", text); }
-    } catch (e) { setAiResult("Ошибка: " + e.message); }
+  const runAI=async(q)=>{
+    if(!aiKey){setShowKey(true);return}
+    setAiLoading(true);setAiResult("");
+    const last7=txs.filter(t=>{const d=new Date(t.date);return(new Date()-d)/86400000<=7});
+    const ctx=JSON.stringify({banks:data.banks,debts:data.debts,budget:data.budget,income:data.income,usdRate:data.usdRate,thisMonth:{expenses:tME,income:tMI,byCategory:eBC,count:mTxs.length},today:{expenses:todE,txs:todTxs},last7:last7,computed:{tTg,tUsd,tInvTg,tDebts,tBudget,mIncome,sGoal,freeUsd,nw}});
+    try{
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":aiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1500,system:"Ты — финансовый AI-аналитик. Кратко, по делу, на русском. Цифры из данных. Эмодзи. Данные:\n"+ctx,messages:[{role:"user",content:q}]})});
+      const d=await res.json();if(d.error){setAiResult("Ошибка: "+(d.error.message||JSON.stringify(d.error)))}
+      else{const text=d.content?.map(c=>c.text||"").join("")||"Нет ответа";setAiResult(text);LS.set("fv4-ai",text)}
+    }catch(e){setAiResult("Ошибка: "+e.message)}
     setAiLoading(false);
   };
 
-  if (!loaded || !data) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#06061a", color: "#6366f1" }}>Загрузка...</div>;
+  if(!loaded||!data)return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#06061a",color:"#6366f1"}}>Загрузка...</div>;
 
-  const TABS = [
-    { id: "overview", label: "Обзор", icon: "◉" },
-    { id: "banks", label: "Банки", icon: "🏦" },
-    { id: "budget", label: "Бюджет", icon: "📊" },
-    { id: "debts", label: "Долги", icon: "💸" },
-    { id: "ai", label: "AI", icon: "🧠" },
-    { id: "log", label: "Лог", icon: "📝" },
-  ];
+  const TABS=[{id:"transactions",label:"Траты",icon:"📤"},{id:"overview",label:"Обзор",icon:"◉"},{id:"banks",label:"Банки",icon:"🏦"},{id:"debts",label:"Долги",icon:"💸"},{id:"ai",label:"AI",icon:"🧠"},{id:"log",label:"Лог",icon:"📝"}];
+  const Card=({children,bg})=><div style={{background:bg||"#0d0c22",borderRadius:16,padding:"16px 14px",marginBottom:10,border:"1px solid #1c1a35"}}>{children}</div>;
+  const Lbl=({children})=><div style={{fontSize:10,color:"#7a7a8a",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>{children}</div>;
 
-  const Card = ({ children, bg }) => <div style={{ background: bg || "#0d0c22", borderRadius: 18, padding: "18px 16px", marginBottom: 12, border: "1px solid #1c1a35" }}>{children}</div>;
-  const Lbl = ({ children }) => <div style={{ fontSize: 11, color: "#7a7a8a", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" }}>{children}</div>;
-  const Big = ({ children, color }) => <div style={{ fontSize: 22, fontWeight: 700, color: color || "#fff", marginTop: 4 }}>{children}</div>;
-
-  return (
-    <div style={S.root}>
-      <div style={S.header}>
-        <div><h1 style={S.title}>Мой Блокнот</h1><p style={S.sub}>Финансовый дневник</p></div>
-        <div style={S.badge}>
-          <div style={{ fontSize: 9, color: "#6a6a7a", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Капитал</div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "#a5b4fc" }}>{fmt(netWorth)} ₸</div>
-        </div>
-      </div>
-
-      <div style={S.nav}>
-        {TABS.map(t => <button key={t.id} onClick={() => setTab(t.id)} style={{ ...S.navBtn, ...(tab === t.id ? S.navAct : {}) }}>
-          <span style={{ fontSize: 15 }}>{t.icon}</span><span style={{ fontSize: 10 }}>{t.label}</span>
-        </button>)}
-      </div>
-
-      <div style={S.body}>
-        {/* OVERVIEW */}
-        {tab === "overview" && <>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 2 }}>
-            <Card bg="linear-gradient(135deg,#071f17,#0d3525)"><Lbl>Доход / мес</Lbl><Big color="#6ee7b7">{fmt(monthlyIncome)} ₸</Big><div style={{ fontSize: 10, color: "#4ade80", marginTop: 3 }}>ЗП + доп + премия/3</div></Card>
-            <Card bg="linear-gradient(135deg,#1f0a17,#351525)"><Lbl>Расходы / мес</Lbl><Big color="#fca5a5">{fmt(totalExp)} ₸</Big><div style={{ fontSize: 10, color: "#f87171", marginTop: 3 }}>{Math.round(totalExp / monthlyIncome * 100)}% дохода</div></Card>
-          </div>
-          <Card bg="linear-gradient(135deg,#0c0b30,#161458)">
-            <Lbl>Ежемесячный план</Lbl>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 10 }}>
-              <div><div style={{ fontSize: 10, color: "#818cf8" }}>Депозиты</div><div style={{ fontSize: 15, fontWeight: 700, color: "#c7d2fe" }}>{fmt(monthlySavingsGoal)} ₸</div></div>
-              <div><div style={{ fontSize: 10, color: "#818cf8" }}>Остаток→$</div><div style={{ fontSize: 15, fontWeight: 700, color: freeForUsd >= 0 ? "#fbbf24" : "#f87171" }}>{fmt(freeForUsd)} ₸</div><div style={{ fontSize: 10, color: "#a08a3a" }}>≈ ${fmt(freeForUsd / data.usdRate)}</div></div>
-              <div><div style={{ fontSize: 10, color: "#818cf8" }}>Свободно</div><div style={{ fontSize: 15, fontWeight: 700, color: "#a5b4fc" }}>{fmt(monthlyIncome - totalExp)} ₸</div></div>
-            </div>
-          </Card>
-          <Card>
-            <Lbl>Структура капитала</Lbl>
-            <div style={{ marginTop: 10 }}>
-              {[{ label: "Тенге на счетах", val: totalTg, color: "#6366f1" },{ label: `Доллары ($${fmt(totalUsd)})`, val: totalInvestTg, color: "#f59e0b" },{ label: "Долги (мне должны)", val: totalDebts, color: "#34d399" }].map((it, i) =>
-                <div key={i} style={{ marginBottom: 10 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}><span style={{ color: "#9a9aaa" }}>{it.label}</span><span style={{ color: "#e0e0f0", fontWeight: 600 }}>{fmt(it.val)} ₸</span></div>
-                  <div style={{ height: 6, borderRadius: 3, background: "#1a1730" }}><div style={{ height: "100%", borderRadius: 3, background: it.color, width: `${netWorth ? Math.min(it.val / netWorth * 100, 100) : 0}%`, transition: "width 0.5s" }} /></div>
-                </div>
-              )}
-            </div>
-          </Card>
-          <Card>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Lbl>Курс USD / ₸</Lbl>
-              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                <input type="number" value={data.usdRate} onChange={e => updateRate(parseFloat(e.target.value) || 0)} style={{ width: 70, padding: "5px 8px", borderRadius: 8, border: "1px solid #2a2745", background: "#0c0a1a", color: "#fff", fontSize: 14, fontFamily: "'DM Sans',sans-serif", textAlign: "center" }} />
-                <span style={{ color: "#6a6a7a", fontSize: 12 }}>₸/$</span>
-              </div>
-            </div>
-          </Card>
-        </>}
-
-        {/* BANKS */}
-        {tab === "banks" && <>
-          {data.banks.map(bank => <div key={bank.id}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: "#c0c0d8", margin: "16px 0 10px" }}>{bank.icon} {bank.name}</h3>
-            {bank.accounts.map(acc => {
-              const cur = acc.currency || "₸", isUsd = cur === "$";
-              return <Card key={acc.id} bg={isUsd ? "linear-gradient(135deg,#1a1500,#252000)" : undefined}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div>
-                    <div style={{ fontWeight: 600, color: "#e0e0f0", fontSize: 14 }}>{acc.name}</div>
-                    {acc.monthlyGoal > 0 && <div style={{ fontSize: 11, color: "#818cf8", marginTop: 2 }}>Цель: +{fmt(acc.monthlyGoal)} ₸/мес</div>}
-                    {isUsd && acc.avgPrice > 0 && <div style={{ fontSize: 11, color: "#a08a3a", marginTop: 2 }}>Средняя покупка: <span style={{ fontWeight: 700, color: "#fbbf24" }}>{fmt(acc.avgPrice)} ₸/$</span></div>}
-                    {isUsd && acc.avgPrice > 0 && data.usdRate > 0 && <div style={{ fontSize: 11, color: data.usdRate >= acc.avgPrice ? "#34d399" : "#f87171", marginTop: 1 }}>{data.usdRate >= acc.avgPrice ? "📈" : "📉"} Курс: {fmt(data.usdRate)} ₸/$ ({data.usdRate >= acc.avgPrice ? "+" : ""}{((data.usdRate - acc.avgPrice) / acc.avgPrice * 100).toFixed(1)}%)</div>}
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 22, fontWeight: 700, color: isUsd ? "#fde68a" : "#a5b4fc" }}>{isUsd ? "$" : ""}{fmt(acc.balance)}{!isUsd ? " ₸" : ""}</div>
-                    {isUsd && <div style={{ fontSize: 12, color: "#a08a3a" }}>≈ {fmt(acc.balance * data.usdRate)} ₸</div>}
-                    {isUsd && acc.avgPrice > 0 && <div style={{ fontSize: 10, color: "#6a6a7a" }}>вложено: {fmt(acc.balance * acc.avgPrice)} ₸</div>}
-                  </div>
-                </div>
-                {isUsd ? <UsdBuyInput currentRate={data.usdRate} onBuy={(a, r) => buyUsd(bank.id, acc.id, a, r)} onSell={(a) => sellUsd(bank.id, acc.id, a)} /> : (
-                  <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <input type="number" placeholder="Сумма ₸" id={`inp-${acc.id}`} style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "1px solid #2a2745", background: "#0c0a1a", color: "#fff", fontSize: 14, fontFamily: "'DM Sans',sans-serif", minWidth: 0 }} />
-                      <button onClick={() => { const inp = document.getElementById(`inp-${acc.id}`); const n = parseFloat(inp?.value); if (!n) return; updateAccount(bank.id, acc.id, n, "пополнение"); inp.value = ""; }}
-                        style={{ padding: "9px 16px", borderRadius: 10, border: "none", background: "#22804a", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", whiteSpace: "nowrap" }}>Внести</button>
-                      <button onClick={() => { const inp = document.getElementById(`inp-${acc.id}`); const n = parseFloat(inp?.value); if (!n) return; updateAccount(bank.id, acc.id, -n, "снятие"); inp.value = ""; }}
-                        style={{ padding: "9px 16px", borderRadius: 10, border: "none", background: "#9f3040", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", whiteSpace: "nowrap" }}>Снять</button>
-                    </div>
-                    <InlineAmountInput placeholder="Установить баланс" btnLabel="= Set" btnColor="#4338ca" onSubmit={(n) => setAccountBalance(bank.id, acc.id, n)} compact />
-                  </div>
-                )}
-              </Card>;
-            })}
-          </div>)}
-          <button style={S.addBtn} onClick={() => { setModal("account"); setModalFields({ bankId: data.banks[0]?.id }); }}>+ Добавить счёт</button>
-        </>}
-
-        {/* BUDGET */}
-        {tab === "budget" && <>
-          <h3 style={S.secTitle}>💰 Доходы</h3>
-          <Card>
-            {[{ label: "Зарплата", field: "salary", val: data.income.salary },{ label: "Доп. доход", field: "additional", val: data.income.additional },{ label: "Премия (раз/квартал)", field: "bonus", val: data.income.bonus }].map((it, i) =>
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: i < 2 ? "1px solid #1c1a35" : "none" }}>
-                <span style={{ color: "#b0b0c0", fontSize: 13 }}>{it.label}</span>
-                <input type="number" value={it.val} onChange={e => updateIncome(it.field, parseFloat(e.target.value) || 0)} style={{ width: 110, padding: "6px 10px", borderRadius: 8, border: "1px solid #2a2745", background: "#0c0a1a", color: "#a5b4fc", fontSize: 14, fontFamily: "'DM Sans',sans-serif", textAlign: "right", fontWeight: 600 }} />
-              </div>
-            )}
-            <div style={{ borderTop: "1px solid #312e81", marginTop: 6, paddingTop: 10, display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#818cf8", fontWeight: 600, fontSize: 13 }}>Итого / мес (ЗП + доп + премия÷3)</span>
-              <span style={{ color: "#a5b4fc", fontWeight: 700, fontSize: 16 }}>{fmt(monthlyIncome)} ₸</span>
-            </div>
-          </Card>
-          <h3 style={S.secTitle}>📊 Расходы — {fmt(totalExp)} ₸/мес</h3>
-          {data.expenses.map(e => {
-            const maxE = Math.max(...data.expenses.map(x => x.amount), 1);
-            return <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <span style={{ fontSize: 18, width: 28, textAlign: "center" }}>{e.icon}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
-                  <span style={{ color: "#c0c0d8", fontSize: 13 }}>{e.name}</span>
-                  <input type="number" value={e.amount} onChange={ev => updateExpense(e.id, parseFloat(ev.target.value) || 0)} style={{ width: 90, padding: "4px 8px", borderRadius: 7, border: "1px solid #2a2745", background: "#0c0a1a", color: "#f0a0a0", fontSize: 13, fontFamily: "'DM Sans',sans-serif", textAlign: "right", fontWeight: 600 }} />
-                </div>
-                <div style={{ height: 4, borderRadius: 2, background: "#1a1730" }}><div style={{ height: "100%", borderRadius: 2, width: `${(e.amount / maxE) * 100}%`, background: "linear-gradient(90deg,#f87171,#fb923c)", transition: "width 0.4s" }} /></div>
-              </div>
-              <button onClick={() => deleteExpense(e.id)} style={{ background: "none", border: "none", color: "#4a4a5a", cursor: "pointer", fontSize: 14 }}>✕</button>
-            </div>;
-          })}
-          <button style={S.addBtn} onClick={() => { setModal("expense"); setModalFields({ icon: "🏷️" }); }}>+ Добавить расход</button>
-        </>}
-
-        {/* DEBTS */}
-        {tab === "debts" && <>
-          <Card bg="linear-gradient(135deg,#071f17,#0d3525)"><Lbl>Итого мне должны</Lbl><Big color="#34d399">{fmt(totalDebts)} ₸</Big></Card>
-          {data.debts.map(d => <Card key={d.id}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ fontWeight: 600, color: "#e0e0f0", fontSize: 15 }}>{d.name}</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: d.amount > 0 ? "#34d399" : "#6a6a7a" }}>{fmt(d.amount)} ₸</div>
-            </div>
-            <InlineAmountInput placeholder="Сколько вернул(а)?" btnLabel="Вернул" btnColor="#22804a" onSubmit={(n) => updateDebt(d.id, n)} />
-            <button onClick={() => deleteDebt(d.id)} style={{ marginTop: 8, background: "none", border: "1px solid #2a2745", borderRadius: 8, color: "#6a6a7a", padding: "6px 12px", fontSize: 11, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Долг закрыт полностью ✓</button>
-          </Card>)}
-          <button style={S.addBtn} onClick={() => { setModal("debt"); setModalFields({}); }}>+ Добавить должника</button>
-        </>}
-
-        {/* AI */}
-        {tab === "ai" && <>
-          <Card bg="linear-gradient(135deg,#0f0a30,#1a1260)">
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: 24 }}>🧠</span>
-              <div><div style={{ fontWeight: 700, color: "#c7d2fe", fontSize: 16 }}>AI Аналитик</div><div style={{ fontSize: 11, color: "#818cf8" }}>Персональный финансовый советник</div></div>
-            </div>
-            {showKeyInput || !aiKey ? (
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 12, color: "#818cf8", marginBottom: 6 }}>Введите Anthropic API ключ (хранится только на вашем устройстве):</div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <input type="password" value={aiKey} onChange={e => setAiKey(e.target.value)} placeholder="sk-ant-..." style={{ flex: 1, padding: "10px 14px", borderRadius: 12, border: "1px solid #312e81", background: "#0c0a2a", color: "#fff", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} />
-                  <button onClick={() => { LS.set("fv3-aikey", aiKey); setShowKeyInput(false); }} style={{ padding: "10px 16px", borderRadius: 12, border: "none", background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>✓</button>
-                </div>
-              </div>
-            ) : (
-              <div style={{ fontSize: 11, color: "#4a4a5a", marginBottom: 8, cursor: "pointer" }} onClick={() => setShowKeyInput(true)}>🔑 API ключ сохранён (нажмите чтобы изменить)</div>
-            )}
-            <div style={{ display: "flex", gap: 6 }}>
-              <input type="text" value={aiQuestion} onChange={e => setAiQuestion(e.target.value)} onKeyDown={e => e.key === "Enter" && aiQuestion && runAI(aiQuestion)}
-                placeholder="Задай вопрос о финансах..." disabled={aiLoading} style={{ flex: 1, padding: "10px 14px", borderRadius: 12, border: "1px solid #312e81", background: "#0c0a2a", color: "#fff", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} />
-              <button onClick={() => aiQuestion && runAI(aiQuestion)} disabled={aiLoading || !aiQuestion}
-                style={{ padding: "10px 18px", borderRadius: 12, border: "none", background: aiLoading ? "#2a2745" : "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", fontSize: 14, cursor: aiLoading ? "wait" : "pointer", fontWeight: 600 }}>{aiLoading ? "..." : "→"}</button>
-            </div>
-          </Card>
-          {aiLoading && <Card><div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 20, height: 20, border: "2px solid #6366f1", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} /><span style={{ color: "#818cf8", fontSize: 13 }}>Анализирую...</span></div></Card>}
-          {aiResult && !aiLoading && <Card><div style={{ fontSize: 13, color: "#d0d0e8", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{aiResult}</div></Card>}
-        </>}
-
-        {/* LOG */}
-        {tab === "log" && <>
-          <h3 style={S.secTitle}>История изменений</h3>
-          {history.length === 0 && <div style={{ textAlign: "center", padding: 40, color: "#4a4a5a" }}><p style={{ fontSize: 32 }}>📋</p><p>Пока пусто</p></div>}
-          {history.map((h, i) => <div key={i} style={{ padding: "8px 0", borderBottom: "1px solid #141230", display: "flex", justifyContent: "space-between", gap: 10 }}>
-            <span style={{ color: "#b0b0c0", fontSize: 12, lineHeight: 1.5 }}>{h.text}</span>
-            <span style={{ color: "#4a4a5a", fontSize: 10, flexShrink: 0, whiteSpace: "nowrap" }}>{h.date} {h.time}</span>
-          </div>)}
-          {history.length > 0 && <button style={{ ...S.addBtn, marginTop: 16, color: "#f87171", borderColor: "#3b1525" }} onClick={() => { setHistory([]); LS.set("fv3-history", []); }}>Очистить лог</button>}
-        </>}
-      </div>
-
-      {/* MODALS */}
-      {modal && <div style={S.overlay} onClick={() => setModal(null)}>
-        <div style={S.modal} onClick={e => e.stopPropagation()}>
-          {modal === "debt" && <>
-            <h2 style={S.modalTitle}>Новый должник</h2>
-            <input type="text" placeholder="Имя" value={modalFields.name || ""} onChange={e => setModalFields({ ...modalFields, name: e.target.value })} style={S.inp} />
-            <input type="number" placeholder="Сумма ₸" value={modalFields.amount || ""} onChange={e => setModalFields({ ...modalFields, amount: e.target.value })} style={S.inp} />
-            <div style={S.modalRow}><button style={S.cancelBtn} onClick={() => setModal(null)}>Отмена</button><button style={S.saveBtn} onClick={addDebt}>Добавить</button></div>
-          </>}
-          {modal === "account" && <>
-            <h2 style={S.modalTitle}>Новый счёт</h2>
-            <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-              {data.banks.map(b => <button key={b.id} onClick={() => setModalFields({ ...modalFields, bankId: b.id })} style={{ flex: 1, padding: "10px 4px", borderRadius: 10, border: modalFields.bankId === b.id ? "2px solid #6366f1" : "1px solid #1c1a35", background: modalFields.bankId === b.id ? "#1e1b4b" : "#0c0a1a", color: "#c0c0d8", fontSize: 12, cursor: "pointer", textAlign: "center", fontFamily: "'DM Sans',sans-serif" }}>{b.icon} {b.name}</button>)}
-            </div>
-            <input type="text" placeholder="Название счёта" value={modalFields.name || ""} onChange={e => setModalFields({ ...modalFields, name: e.target.value })} style={S.inp} />
-            <div style={{ display: "flex", gap: 8 }}>
-              <input type="number" placeholder="Баланс" value={modalFields.balance || ""} onChange={e => setModalFields({ ...modalFields, balance: e.target.value })} style={{ ...S.inp, flex: 1 }} />
-              <select value={modalFields.currency || "₸"} onChange={e => setModalFields({ ...modalFields, currency: e.target.value })} style={{ ...S.inp, width: 70 }}><option value="₸">₸</option><option value="$">$</option><option value="€">€</option></select>
-            </div>
-            <input type="number" placeholder="Цель пополнения/мес (необяз.)" value={modalFields.goal || ""} onChange={e => setModalFields({ ...modalFields, goal: e.target.value })} style={S.inp} />
-            <div style={S.modalRow}><button style={S.cancelBtn} onClick={() => setModal(null)}>Отмена</button><button style={S.saveBtn} onClick={addAccount}>Добавить</button></div>
-          </>}
-          {modal === "expense" && <>
-            <h2 style={S.modalTitle}>Новый расход</h2>
-            <div style={{ display: "flex", gap: 5, marginBottom: 10, flexWrap: "wrap" }}>
-              {["🏠","🍔","🚗","💊","👕","🎮","📚","📱","💡","📋","✈️","🏷️","🐾","💇","🎁","🏋️"].map(ic => <button key={ic} onClick={() => setModalFields({ ...modalFields, icon: ic })} style={{ fontSize: 18, padding: "5px 7px", borderRadius: 8, border: modalFields.icon === ic ? "2px solid #6366f1" : "1px solid #1c1a35", background: modalFields.icon === ic ? "#1e1b4b" : "#0c0a1a", cursor: "pointer" }}>{ic}</button>)}
-            </div>
-            <input type="text" placeholder="Название" value={modalFields.name || ""} onChange={e => setModalFields({ ...modalFields, name: e.target.value })} style={S.inp} />
-            <input type="number" placeholder="Сумма / мес ₸" value={modalFields.amount || ""} onChange={e => setModalFields({ ...modalFields, amount: e.target.value })} style={S.inp} />
-            <div style={S.modalRow}><button style={S.cancelBtn} onClick={() => setModal(null)}>Отмена</button><button style={S.saveBtn} onClick={addExpense}>Добавить</button></div>
-          </>}
-        </div>
-      </div>}
+  return <div style={S.root}>
+    <div style={S.header}>
+      <div><h1 style={S.title}>Мой Блокнот</h1><p style={S.sub}>Финансовый дневник</p></div>
+      <div style={S.badge}><div style={{fontSize:9,color:"#6a6a7a",fontWeight:600}}>КАПИТАЛ</div><div style={{fontSize:15,fontWeight:700,color:"#a5b4fc"}}>{fmt(nw)} ₸</div></div>
     </div>
-  );
+    <div style={S.nav}>{TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{...S.navBtn,...(tab===t.id?S.navAct:{})}}><span style={{fontSize:14}}>{t.icon}</span><span style={{fontSize:9}}>{t.label}</span></button>)}</div>
+    <div style={S.body}>
+
+      {tab==="transactions"&&<>
+        <div style={S.monthNav}><button style={S.mArr} onClick={()=>{if(vM===0){setVM(11);setVY(vY-1)}else setVM(vM-1)}}>←</button><span style={S.mLabel}>{MO[vM]} {vY}</span><button style={S.mArr} onClick={()=>{if(vM===11){setVM(0);setVY(vY+1)}else setVM(vM+1)}}>→</button></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+          <Card bg="linear-gradient(135deg,#1f0a17,#301525)"><Lbl>Расходы</Lbl><div style={{fontSize:17,fontWeight:700,color:"#fca5a5",marginTop:3}}>{fmt(tME)}</div></Card>
+          <Card bg="linear-gradient(135deg,#071f17,#0d3020)"><Lbl>Доходы</Lbl><div style={{fontSize:17,fontWeight:700,color:"#6ee7b7",marginTop:3}}>{fmt(tMI)}</div></Card>
+          <Card bg="linear-gradient(135deg,#0c0b30,#161450)"><Lbl>Сегодня</Lbl><div style={{fontSize:17,fontWeight:700,color:"#c7d2fe",marginTop:3}}>{fmt(todE)}</div></Card>
+        </div>
+        {sC.length>0&&<Card><Lbl>Расходы по категориям</Lbl><div style={{marginTop:10}}>{sC.map(([cat,amt])=>{const c=gc(cat);const p=tME?Math.round(amt/tME*100):0;return<div key={cat} style={{marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:3}}><span style={{color:"#c0c0d8"}}>{c.icon} {c.name} <span style={{color:"#5a5a6a"}}>{p}%</span></span><span style={{color:"#e0e0f0",fontWeight:600}}>{fmt(amt)} ₸</span></div><div style={{height:5,borderRadius:3,background:"#1a1730"}}><div style={{height:"100%",borderRadius:3,background:c.color,width:`${p}%`,transition:"width 0.4s"}}/></div></div>})}</div></Card>}
+        {(()=>{const days={};mTxs.forEach(t=>{days[t.date]=days[t.date]||[];days[t.date].push(t)});return Object.keys(days).sort((a,b)=>b.localeCompare(a)).map(day=>{const dE=days[day].filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);const dI=days[day].filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0);return<div key={day} style={{marginBottom:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,padding:"0 2px"}}><span style={{fontSize:13,fontWeight:600,color:"#8a8a9a"}}>{day===td()?"Сегодня":new Date(day).toLocaleDateString("ru-RU",{day:"numeric",month:"short",weekday:"short"})}</span><span style={{fontSize:12,color:"#6a6a7a"}}>{dE>0&&<span style={{color:"#f87171"}}>-{fmt(dE)}</span>}{dE>0&&dI>0&&" · "}{dI>0&&<span style={{color:"#34d399"}}>+{fmt(dI)}</span>}</span></div>
+          {days[day].sort((a,b)=>parseInt(b.id)-parseInt(a.id)).map(t=>{const c=gc(t.category);const isI=t.type==="income";return<div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:"#0d0c22",borderRadius:12,marginBottom:4,border:"1px solid #141230"}}>
+            <div style={{width:36,height:36,borderRadius:10,background:c.color+"22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{c.icon}</div>
+            <div style={{flex:1,minWidth:0}}><div style={{fontSize:13,fontWeight:500,color:"#d0d0e8"}}>{c.name}</div>{t.note&&<div style={{fontSize:11,color:"#5a5a6a",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.note}</div>}</div>
+            <div style={{fontSize:15,fontWeight:600,color:isI?"#34d399":"#f87171",whiteSpace:"nowrap"}}>{isI?"+":"-"}{fmt(t.amount)}</div>
+            <button onClick={()=>deleteTx(t.id)} style={{background:"none",border:"none",color:"#3a3a4a",cursor:"pointer",fontSize:13,padding:2}}>✕</button>
+          </div>})}
+        </div>})})()}
+        {mTxs.length===0&&<div style={{textAlign:"center",padding:40,color:"#4a4a5a"}}><p style={{fontSize:32}}>📭</p><p>Нет записей</p></div>}
+        <button style={S.fab} onClick={()=>{setTxModal(true);setTxType("expense");setTxCat("")}}>+ Запись</button>
+      </>}
+
+      {tab==="overview"&&<>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:2}}>
+          <Card bg="linear-gradient(135deg,#071f17,#0d3525)"><Lbl>Доход/мес</Lbl><div style={{fontSize:20,fontWeight:700,color:"#6ee7b7",marginTop:4}}>{fmt(mIncome)} ₸</div><div style={{fontSize:10,color:"#4ade80",marginTop:2}}>ЗП+доп+премия/3</div></Card>
+          <Card bg="linear-gradient(135deg,#1f0a17,#351525)"><Lbl>Бюджет/мес</Lbl><div style={{fontSize:20,fontWeight:700,color:"#fca5a5",marginTop:4}}>{fmt(tBudget)} ₸</div><div style={{fontSize:10,color:"#f87171",marginTop:2}}>{Math.round(tBudget/mIncome*100)}%</div></Card>
+        </div>
+        <Card bg="linear-gradient(135deg,#0c0b30,#161458)"><Lbl>План</Lbl><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginTop:8}}>
+          <div><div style={{fontSize:10,color:"#818cf8"}}>Депозиты</div><div style={{fontSize:14,fontWeight:700,color:"#c7d2fe"}}>{fmt(sGoal)} ₸</div></div>
+          <div><div style={{fontSize:10,color:"#818cf8"}}>Ост→$</div><div style={{fontSize:14,fontWeight:700,color:freeUsd>=0?"#fbbf24":"#f87171"}}>{fmt(freeUsd)} ₸</div></div>
+          <div><div style={{fontSize:10,color:"#818cf8"}}>Свободно</div><div style={{fontSize:14,fontWeight:700,color:"#a5b4fc"}}>{fmt(mIncome-tBudget)} ₸</div></div>
+        </div></Card>
+        <Card><Lbl>Структура</Lbl><div style={{marginTop:8}}>{[{l:"Тенге",v:tTg,c:"#6366f1"},{l:`USD ($${fmt(tUsd)})`,v:tInvTg,c:"#f59e0b"},{l:"Долги мне",v:tDebts,c:"#34d399"}].map((x,i)=><div key={i} style={{marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:2}}><span style={{color:"#9a9aaa"}}>{x.l}</span><span style={{color:"#e0e0f0",fontWeight:600}}>{fmt(x.v)} ₸</span></div><div style={{height:5,borderRadius:3,background:"#1a1730"}}><div style={{height:"100%",borderRadius:3,background:x.c,width:`${nw?Math.min(x.v/nw*100,100):0}%`}}/></div></div>)}</div></Card>
+        <Card><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><Lbl>Курс USD</Lbl><div style={{display:"flex",gap:6,alignItems:"center"}}><input type="number" value={data.usdRate} onChange={e=>updateRate(parseFloat(e.target.value)||0)} style={{width:65,padding:"4px 8px",borderRadius:8,border:"1px solid #2a2745",background:"#0c0a1a",color:"#fff",fontSize:14,fontFamily:"'DM Sans',sans-serif",textAlign:"center"}}/><span style={{color:"#5a5a6a",fontSize:11}}>₸/$</span></div></div></Card>
+        <div style={{fontSize:13,fontWeight:600,color:"#8a8a9a",margin:"12px 0 8px"}}>📊 Бюджет</div>
+        <Card>{[{l:"Зарплата",f:"salary",v:data.income.salary},{l:"Доп. доход",f:"additional",v:data.income.additional},{l:"Премия (кв.)",f:"bonus",v:data.income.bonus}].map((x,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<2?"1px solid #1c1a35":"none"}}><span style={{color:"#b0b0c0",fontSize:13}}>{x.l}</span><input type="number" value={x.v} onChange={e=>updateIncome(x.f,parseFloat(e.target.value)||0)} style={{width:100,padding:"5px 8px",borderRadius:8,border:"1px solid #2a2745",background:"#0c0a1a",color:"#a5b4fc",fontSize:13,fontFamily:"'DM Sans',sans-serif",textAlign:"right",fontWeight:600}}/></div>)}<div style={{borderTop:"1px solid #312e81",marginTop:4,paddingTop:8,display:"flex",justifyContent:"space-between"}}><span style={{color:"#818cf8",fontWeight:600,fontSize:12}}>Итого/мес</span><span style={{color:"#a5b4fc",fontWeight:700,fontSize:15}}>{fmt(mIncome)} ₸</span></div></Card>
+        {data.budget.map(e=>{const mx=Math.max(...data.budget.map(x=>x.amount),1);return<div key={e.id} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:16,width:24,textAlign:"center"}}>{e.icon}</span><div style={{flex:1,minWidth:0}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}><span style={{color:"#c0c0d8",fontSize:12}}>{e.name}</span><input type="number" value={e.amount} onChange={ev=>updateBudget(e.id,parseFloat(ev.target.value)||0)} style={{width:85,padding:"3px 6px",borderRadius:7,border:"1px solid #2a2745",background:"#0c0a1a",color:"#f0a0a0",fontSize:12,fontFamily:"'DM Sans',sans-serif",textAlign:"right",fontWeight:600}}/></div><div style={{height:3,borderRadius:2,background:"#1a1730"}}><div style={{height:"100%",borderRadius:2,width:`${(e.amount/mx)*100}%`,background:"linear-gradient(90deg,#f87171,#fb923c)"}}/></div></div><button onClick={()=>deleteBudget(e.id)} style={{background:"none",border:"none",color:"#3a3a4a",cursor:"pointer",fontSize:12}}>✕</button></div>})}
+        <button style={S.addBtn} onClick={()=>{setModal("budget");setMf({icon:"🏷️"})}}>+ Расход</button>
+      </>}
+
+      {tab==="banks"&&<>{data.banks.map(bank=><div key={bank.id}><div style={{fontSize:14,fontWeight:600,color:"#c0c0d8",margin:"14px 0 8px"}}>{bank.icon} {bank.name}</div>{bank.accounts.map(acc=>{const cur=acc.currency||"₸",isU=cur==="$";return<Card key={acc.id} bg={isU?"linear-gradient(135deg,#1a1500,#252000)":undefined}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div><div style={{fontWeight:600,color:"#e0e0f0",fontSize:13}}>{acc.name}</div>{acc.monthlyGoal>0&&<div style={{fontSize:10,color:"#818cf8",marginTop:1}}>Цель: +{fmt(acc.monthlyGoal)}/мес</div>}{isU&&acc.avgPrice>0&&<div style={{fontSize:10,color:"#a08a3a",marginTop:1}}>Средняя: <b style={{color:"#fbbf24"}}>{fmt(acc.avgPrice)}</b> ₸/$</div>}{isU&&acc.avgPrice>0&&data.usdRate>0&&<div style={{fontSize:10,color:data.usdRate>=acc.avgPrice?"#34d399":"#f87171",marginTop:1}}>{data.usdRate>=acc.avgPrice?"📈":"📉"} {fmt(data.usdRate)} ({((data.usdRate-acc.avgPrice)/acc.avgPrice*100).toFixed(1)}%)</div>}</div><div style={{textAlign:"right"}}><div style={{fontSize:20,fontWeight:700,color:isU?"#fde68a":"#a5b4fc"}}>{isU?"$":""}{fmt(acc.balance)}{!isU?" ₸":""}</div>{isU&&<div style={{fontSize:11,color:"#a08a3a"}}>≈ {fmt(acc.balance*data.usdRate)} ₸</div>}</div></div>
+        {isU?<UsdInp currentRate={data.usdRate} onBuy={(a,r)=>buyUsd(bank.id,acc.id,a,r)} onSell={a=>sellUsd(bank.id,acc.id,a)}/>:
+        <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:5}}><div style={{display:"flex",gap:6}}><input type="number" placeholder="Сумма ₸" id={`i-${acc.id}`} style={IS.inp}/><button onClick={()=>{const el=document.getElementById(`i-${acc.id}`);const n=parseFloat(el?.value);if(n){updateAcc(bank.id,acc.id,n,"пополнение");el.value=""}}} style={{...IS.btn,background:"#22804a"}}>Внести</button><button onClick={()=>{const el=document.getElementById(`i-${acc.id}`);const n=parseFloat(el?.value);if(n){updateAcc(bank.id,acc.id,-n,"снятие");el.value=""}}} style={{...IS.btn,background:"#9f3040"}}>Снять</button></div><Inp placeholder="Установить баланс" btnLabel="Set" btnColor="#4338ca" onSubmit={n=>setAccBal(bank.id,acc.id,n)} compact/></div>}
+      </Card>})}</div>)}<button style={S.addBtn} onClick={()=>{setModal("account");setMf({bankId:data.banks[0]?.id})}}>+ Счёт</button></>}
+
+      {tab==="debts"&&<><Card bg="linear-gradient(135deg,#071f17,#0d3525)"><Lbl>Мне должны</Lbl><div style={{fontSize:22,fontWeight:700,color:"#34d399",marginTop:4}}>{fmt(tDebts)} ₸</div></Card>
+        {data.debts.map(d=><Card key={d.id}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{fontWeight:600,color:"#e0e0f0",fontSize:15}}>{d.name}</div><div style={{fontSize:20,fontWeight:700,color:"#34d399"}}>{fmt(d.amount)} ₸</div></div><Inp placeholder="Сколько вернул(а)?" btnLabel="Вернул" btnColor="#22804a" onSubmit={n=>returnDebt(d.id,n)}/><button onClick={()=>closeDebt(d.id)} style={{marginTop:6,background:"none",border:"1px solid #1c1a35",borderRadius:8,color:"#5a5a6a",padding:"5px 10px",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Закрыт ✓</button></Card>)}
+        <button style={S.addBtn} onClick={()=>{setModal("debt");setMf({})}}>+ Должник</button></>}
+
+      {tab==="ai"&&<><Card bg="linear-gradient(135deg,#0f0a30,#1a1260)">
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><span style={{fontSize:22}}>🧠</span><div><div style={{fontWeight:700,color:"#c7d2fe",fontSize:15}}>AI Аналитик</div><div style={{fontSize:10,color:"#818cf8"}}>Анализ трат</div></div></div>
+        {showKey||!aiKey?<div style={{marginBottom:10}}><div style={{fontSize:11,color:"#818cf8",marginBottom:6}}>Anthropic API ключ (хранится на устройстве):</div><div style={{display:"flex",gap:6}}><input type="password" value={aiKey} onChange={e=>setAiKey(e.target.value)} placeholder="sk-ant-..." style={{flex:1,padding:"9px 12px",borderRadius:10,border:"1px solid #252350",background:"#0c0a2a",color:"#fff",fontSize:13,fontFamily:"'DM Sans',sans-serif"}}/><button onClick={()=>{LS.set("fv4-key",aiKey);setShowKey(false)}} style={{padding:"9px 14px",borderRadius:10,border:"none",background:"#6366f1",color:"#fff",fontSize:14,fontWeight:600,cursor:"pointer"}}>✓</button></div></div>:<div style={{fontSize:10,color:"#3a3a4a",marginBottom:8,cursor:"pointer"}} onClick={()=>setShowKey(true)}>🔑 Ключ сохранён (изменить)</div>}
+        <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
+          {[{l:"📊 Анализ дня",q:`Проанализируй мои траты за сегодня (${td()}). Оценка, сравни с обычным днём.`},{l:"📅 За неделю",q:"Анализ расходов за 7 дней. Тренды, аномалии."},{l:"📈 За месяц",q:"Полный анализ месяца: расходы vs бюджет."},{l:"💡 Экономия",q:"Где сэкономить? Конкретные категории и суммы."},{l:"🎯 Полный отчёт",q:"Полный финотчёт: активы, долги, бюджет, план, риски."}].map((b,i)=><button key={i} onClick={()=>runAI(b.q)} disabled={aiLoading} style={{padding:"6px 10px",borderRadius:9,border:"1px solid #252350",background:"#0c0a2a",color:"#a5b4fc",fontSize:11,cursor:aiLoading?"wait":"pointer",fontFamily:"'DM Sans',sans-serif",opacity:aiLoading?0.5:1}}>{b.l}</button>)}
+        </div>
+        <div style={{display:"flex",gap:6}}><input type="text" value={aiQuestion} onChange={e=>setAiQuestion(e.target.value)} onKeyDown={e=>e.key==="Enter"&&aiQuestion&&runAI(aiQuestion)} placeholder="Свой вопрос..." disabled={aiLoading} style={{flex:1,padding:"9px 12px",borderRadius:10,border:"1px solid #252350",background:"#0c0a2a",color:"#fff",fontSize:13,fontFamily:"'DM Sans',sans-serif"}}/><button onClick={()=>aiQuestion&&runAI(aiQuestion)} disabled={aiLoading||!aiQuestion} style={{padding:"9px 16px",borderRadius:10,border:"none",background:aiLoading?"#2a2745":"#6366f1",color:"#fff",fontSize:14,cursor:aiLoading?"wait":"pointer",fontWeight:600}}>{aiLoading?"...":"→"}</button></div>
+      </Card>
+      {aiLoading&&<Card><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:18,height:18,border:"2px solid #6366f1",borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/><span style={{color:"#818cf8",fontSize:12}}>Анализирую...</span></div></Card>}
+      {aiResult&&!aiLoading&&<Card><div style={{fontSize:13,color:"#d0d0e8",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{aiResult}</div></Card>}
+      </>}
+
+      {tab==="log"&&<><div style={{fontSize:13,fontWeight:600,color:"#8a8a9a",margin:"8px 0"}}>История</div>
+        {history.length===0&&<div style={{textAlign:"center",padding:40,color:"#4a4a5a"}}><p style={{fontSize:28}}>📋</p><p>Пусто</p></div>}
+        {history.map((h,i)=><div key={i} style={{padding:"6px 0",borderBottom:"1px solid #111020",display:"flex",justifyContent:"space-between",gap:8}}><span style={{color:"#b0b0c0",fontSize:11,lineHeight:1.5}}>{h.text}</span><span style={{color:"#3a3a4a",fontSize:9,flexShrink:0}}>{h.date} {h.time}</span></div>)}
+        {history.length>0&&<button style={{...S.addBtn,marginTop:12,color:"#f87171",borderColor:"#3b1525"}} onClick={()=>{setHistory([]);LS.set("fv4-hist",[])}}>Очистить</button>}
+      </>}
+    </div>
+
+    {txModal&&<div style={S.overlay} onClick={()=>setTxModal(false)}><div style={S.modal} onClick={e=>e.stopPropagation()}>
+      <h2 style={S.modalTitle}>Новая запись</h2>
+      <div style={{display:"flex",gap:6,marginBottom:14}}>
+        <button onClick={()=>{setTxType("expense");setTxCat("")}} style={{...S.typeBtn,...(txType==="expense"?{background:"#4c1d2e",borderColor:"#f87171",color:"#f87171"}:{})}}>Расход</button>
+        <button onClick={()=>{setTxType("income");setTxCat("")}} style={{...S.typeBtn,...(txType==="income"?{background:"#064e3b",borderColor:"#34d399",color:"#34d399"}:{})}}>Доход</button>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:14}}>
+        {(txType==="expense"?CATS:INCOME_CATS).map(c=><button key={c.id} onClick={()=>setTxCat(c.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"8px 2px",borderRadius:10,border:txCat===c.id?`2px solid ${c.color}`:"1px solid #1c1a35",background:txCat===c.id?c.color+"22":"#06061a",cursor:"pointer",color:"#c0c0d8"}}><span style={{fontSize:20}}>{c.icon}</span><span style={{fontSize:10}}>{c.name}</span></button>)}
+      </div>
+      <input type="number" placeholder="Сумма ₸" value={txAmt} onChange={e=>setTxAmt(e.target.value)} style={S.inp}/>
+      <input type="text" placeholder="Заметка (необяз.)" value={txNote} onChange={e=>setTxNote(e.target.value)} style={S.inp}/>
+      <input type="date" value={txDate} onChange={e=>setTxDate(e.target.value)} style={S.inp}/>
+      <div style={S.modalRow}><button style={S.cancelBtn} onClick={()=>setTxModal(false)}>Отмена</button><button style={S.saveBtn} onClick={addTx}>Записать</button></div>
+    </div></div>}
+
+    {modal&&<div style={S.overlay} onClick={()=>setModal(null)}><div style={S.modal} onClick={e=>e.stopPropagation()}>
+      {modal==="debt"&&<><h2 style={S.modalTitle}>Должник</h2><input type="text" placeholder="Имя" value={mf.name||""} onChange={e=>setMf({...mf,name:e.target.value})} style={S.inp}/><input type="number" placeholder="Сумма ₸" value={mf.amount||""} onChange={e=>setMf({...mf,amount:e.target.value})} style={S.inp}/><div style={S.modalRow}><button style={S.cancelBtn} onClick={()=>setModal(null)}>Отмена</button><button style={S.saveBtn} onClick={addDebt}>Добавить</button></div></>}
+      {modal==="account"&&<><h2 style={S.modalTitle}>Счёт</h2><div style={{display:"flex",gap:5,marginBottom:10}}>{data.banks.map(b=><button key={b.id} onClick={()=>setMf({...mf,bankId:b.id})} style={{flex:1,padding:"8px 2px",borderRadius:9,border:mf.bankId===b.id?"2px solid #6366f1":"1px solid #1c1a35",background:mf.bankId===b.id?"#1e1b4b":"#06061a",color:"#c0c0d8",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textAlign:"center"}}>{b.icon} {b.name}</button>)}</div><input type="text" placeholder="Название" value={mf.name||""} onChange={e=>setMf({...mf,name:e.target.value})} style={S.inp}/><div style={{display:"flex",gap:6}}><input type="number" placeholder="Баланс" value={mf.balance||""} onChange={e=>setMf({...mf,balance:e.target.value})} style={{...S.inp,flex:1}}/><select value={mf.currency||"₸"} onChange={e=>setMf({...mf,currency:e.target.value})} style={{...S.inp,width:60}}><option>₸</option><option>$</option><option>€</option></select></div><input type="number" placeholder="Цель/мес" value={mf.goal||""} onChange={e=>setMf({...mf,goal:e.target.value})} style={S.inp}/><div style={S.modalRow}><button style={S.cancelBtn} onClick={()=>setModal(null)}>Отмена</button><button style={S.saveBtn} onClick={addAccount}>Добавить</button></div></>}
+      {modal==="budget"&&<><h2 style={S.modalTitle}>Статья расходов</h2><div style={{display:"flex",gap:4,marginBottom:10,flexWrap:"wrap"}}>{["🏠","🍔","🚗","💊","👕","🎮","📚","📱","💡","📋","✈️","🏷️"].map(ic=><button key={ic} onClick={()=>setMf({...mf,icon:ic})} style={{fontSize:16,padding:"4px 6px",borderRadius:7,border:mf.icon===ic?"2px solid #6366f1":"1px solid #1c1a35",background:mf.icon===ic?"#1e1b4b":"#06061a",cursor:"pointer"}}>{ic}</button>)}</div><input type="text" placeholder="Название" value={mf.name||""} onChange={e=>setMf({...mf,name:e.target.value})} style={S.inp}/><input type="number" placeholder="Сумма/мес ₸" value={mf.amount||""} onChange={e=>setMf({...mf,amount:e.target.value})} style={S.inp}/><div style={S.modalRow}><button style={S.cancelBtn} onClick={()=>setModal(null)}>Отмена</button><button style={S.saveBtn} onClick={addBudgetItem}>Добавить</button></div></>}
+    </div></div>}
+  </div>;
 }
 
-const S = {
-  root: { fontFamily: "'DM Sans',sans-serif", background: "#06061a", color: "#e2e0f0", minHeight: "100vh", maxWidth: 520, margin: "0 auto", paddingBottom: 40 },
-  header: { padding: "24px 18px 10px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
-  title: { fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 800, margin: 0, color: "#fff" },
-  sub: { fontSize: 11, color: "#5a5a6a", margin: "3px 0 0" },
-  badge: { background: "#0d0c22", border: "1px solid #1c1a35", borderRadius: 14, padding: "7px 14px", textAlign: "right" },
-  nav: { display: "flex", gap: 3, padding: "6px 14px 14px", overflowX: "auto" },
-  navBtn: { flex: 1, padding: "7px 2px", borderRadius: 11, border: "none", background: "#0a0920", color: "#5a5a6a", fontSize: 10, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, minWidth: 0, transition: "all 0.2s" },
-  navAct: { background: "linear-gradient(135deg,#1e1b4b,#312e81)", color: "#c7d2fe", boxShadow: "0 2px 12px rgba(99,102,241,0.15)" },
-  body: { padding: "0 14px" },
-  secTitle: { fontSize: 14, fontWeight: 600, color: "#b0b0c8", margin: "18px 0 10px" },
-  addBtn: { width: "100%", padding: "12px", borderRadius: 12, border: "1px dashed #2a2745", background: "transparent", color: "#818cf8", fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontWeight: 500, marginTop: 8 },
-  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" },
-  modal: { background: "#0d0c22", borderRadius: "22px 22px 0 0", padding: "24px 20px 32px", width: "100%", maxWidth: 520, maxHeight: "85vh", overflowY: "auto" },
-  modalTitle: { fontFamily: "'Playfair Display',serif", fontSize: 19, fontWeight: 700, color: "#fff", margin: "0 0 16px" },
-  inp: { width: "100%", padding: "11px 13px", borderRadius: 11, border: "1px solid #2a2745", background: "#06061a", color: "#fff", fontSize: 14, fontFamily: "'DM Sans',sans-serif", marginBottom: 10, boxSizing: "border-box" },
-  modalRow: { display: "flex", gap: 10, marginTop: 4 },
-  cancelBtn: { flex: 1, padding: "11px 0", borderRadius: 11, border: "1px solid #2a2745", background: "#06061a", color: "#6a6a7a", fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" },
-  saveBtn: { flex: 1, padding: "11px 0", borderRadius: 11, border: "none", background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" },
+const S={
+  root:{fontFamily:"'DM Sans',sans-serif",background:"#06061a",color:"#e2e0f0",minHeight:"100vh",maxWidth:520,margin:"0 auto",paddingBottom:80},
+  header:{padding:"20px 16px 8px",display:"flex",justifyContent:"space-between",alignItems:"flex-start"},
+  title:{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:800,margin:0,color:"#fff"},
+  sub:{fontSize:10,color:"#5a5a6a",margin:"2px 0 0"},
+  badge:{background:"#0d0c22",border:"1px solid #1c1a35",borderRadius:12,padding:"6px 12px",textAlign:"right"},
+  nav:{display:"flex",gap:3,padding:"4px 12px 12px",overflowX:"auto"},
+  navBtn:{flex:1,padding:"6px 2px",borderRadius:10,border:"none",background:"#0a0920",color:"#5a5a6a",fontSize:9,fontWeight:500,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",gap:1,minWidth:0,transition:"all 0.2s"},
+  navAct:{background:"linear-gradient(135deg,#1e1b4b,#312e81)",color:"#c7d2fe",boxShadow:"0 2px 10px rgba(99,102,241,0.15)"},
+  body:{padding:"0 12px"},
+  monthNav:{display:"flex",alignItems:"center",justifyContent:"center",gap:14,marginBottom:14},
+  mArr:{background:"#0d0c22",border:"1px solid #1c1a35",borderRadius:8,color:"#a5b4fc",width:32,height:32,fontSize:15,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"},
+  mLabel:{fontFamily:"'Playfair Display',serif",fontSize:16,fontWeight:700,color:"#d0d0e8",minWidth:140,textAlign:"center"},
+  fab:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",borderRadius:14,color:"#fff",padding:"12px 28px",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 4px 20px rgba(99,102,241,0.4)",fontFamily:"'DM Sans',sans-serif",zIndex:50},
+  addBtn:{width:"100%",padding:"10px",borderRadius:10,border:"1px dashed #2a2745",background:"transparent",color:"#818cf8",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:500,marginTop:6},
+  overlay:{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:100,backdropFilter:"blur(4px)"},
+  modal:{background:"#0d0c22",borderRadius:"20px 20px 0 0",padding:"22px 18px 30px",width:"100%",maxWidth:520,maxHeight:"88vh",overflowY:"auto"},
+  modalTitle:{fontFamily:"'Playfair Display',serif",fontSize:18,fontWeight:700,color:"#fff",margin:"0 0 14px"},
+  typeBtn:{flex:1,padding:"9px 0",borderRadius:10,border:"1px solid #2a2745",background:"#06061a",color:"#6a6a7a",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"},
+  inp:{width:"100%",padding:"10px 12px",borderRadius:10,border:"1px solid #2a2745",background:"#06061a",color:"#fff",fontSize:14,fontFamily:"'DM Sans',sans-serif",marginBottom:8,boxSizing:"border-box"},
+  modalRow:{display:"flex",gap:8,marginTop:4},
+  cancelBtn:{flex:1,padding:"10px 0",borderRadius:10,border:"1px solid #2a2745",background:"#06061a",color:"#6a6a7a",fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"},
+  saveBtn:{flex:1,padding:"10px 0",borderRadius:10,border:"none",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"},
 };
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
-
