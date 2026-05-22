@@ -81,14 +81,16 @@ function fmt(n) { return new Intl.NumberFormat("ru-RU").format(Math.round(Math.a
 function td() { return new Date().toISOString().slice(0, 10); }
 function gc(id) { return [...CATS, ...INC_CATS].find(c => c.id === id) || { name: id, icon: "📌", color: "#64748b" }; }
 
-// Input that saves only on blur — prevents keyboard closing on mobile
+// Uncontrolled input — React never touches it while typing. Saves on blur only.
 function LazyNum({ value, onChange, style, placeholder }) {
-  const [local, setLocal] = useState(String(value || ""));
-  useEffect(() => { setLocal(String(value || "")); }, [value]);
-  return <input type="number" value={local} placeholder={placeholder}
-    onChange={e => setLocal(e.target.value)}
-    onBlur={() => { const n = parseFloat(local); if (!isNaN(n) && n !== value) onChange(n); }}
-    style={style} />;
+  return <input
+    key={String(value)}
+    type="number"
+    defaultValue={value || ""}
+    placeholder={placeholder}
+    onBlur={e => { const n = parseFloat(e.target.value); if (!isNaN(n) && n !== value) onChange(n); }}
+    style={style}
+  />;
 }
 
 function Inp({ onSubmit, placeholder, btnLabel, btnColor, compact }) {
@@ -381,7 +383,7 @@ function App() {
       {/* AI */}
       {tab === "ai" && <><Card bg="linear-gradient(135deg,#0f0a30,#1a1260)">
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}><span style={{ fontSize: 22 }}>🧠</span><div><div style={{ fontWeight: 700, color: "#c7d2fe", fontSize: 15 }}>AI Аналитик</div></div></div>
-        {showKey || !aiKey ? <div style={{ marginBottom: 10 }}><div style={{ fontSize: 11, color: "#818cf8", marginBottom: 6 }}>Anthropic API ключ (хранится на устройстве):</div><div style={{ display: "flex", gap: 6 }}><input type="password" value={aiKey} onChange={e => setAiKey(e.target.value)} placeholder="sk-ant-..." style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "1px solid #252350", background: "#0c0a2a", color: "#fff", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} /><button onClick={() => { LS.set("fv5-key", aiKey); setShowKey(false); }} style={{ padding: "9px 14px", borderRadius: 10, border: "none", background: "#6366f1", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>✓</button></div></div> : <div style={{ fontSize: 10, color: "#3a3a4a", marginBottom: 8, cursor: "pointer" }} onClick={() => setShowKey(true)}>🔑 Ключ сохранён (изменить)</div>}
+        {showKey || !aiKey ? <div style={{ marginBottom: 10 }}><div style={{ fontSize: 11, color: "#818cf8", marginBottom: 6 }}>Anthropic API ключ:</div><div style={{ display: "flex", gap: 6 }}><input type="password" value={aiKey} onChange={e => setAiKey(e.target.value)} placeholder="sk-ant-..." style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "1px solid #252350", background: "#0c0a2a", color: "#fff", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} /><button onClick={() => { LS.set("fv5-key", aiKey); setShowKey(false); }} style={{ padding: "9px 14px", borderRadius: 10, border: "none", background: "#6366f1", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>✓</button></div></div> : <div style={{ fontSize: 10, color: "#3a3a4a", marginBottom: 8, cursor: "pointer" }} onClick={() => setShowKey(true)}>🔑 Ключ сохранён</div>}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 10 }}>
           {[{ l: "📊 Анализ дня", q: `Проанализируй сегодняшние траты (${td()}). Сравни с бюджетом. Если что-то превышено — укажи.` }, { l: "📅 За неделю", q: "Анализ за 7 дней. Тренды, что превышено." }, { l: "📈 За месяц", q: "Полный анализ месяца vs бюджет. Превышения." }, { l: "💡 Экономия", q: "Где сэкономить? Конкретные суммы." }, { l: "🎯 Полный", q: "Полный финотчёт: активы, долги, бюджет, план." }].map((b, i) => <button key={i} onClick={() => runAI(b.q)} disabled={aiLoading} style={{ padding: "6px 10px", borderRadius: 9, border: "1px solid #252350", background: "#0c0a2a", color: "#a5b4fc", fontSize: 11, cursor: aiLoading ? "wait" : "pointer", fontFamily: "'DM Sans',sans-serif", opacity: aiLoading ? 0.5 : 1 }}>{b.l}</button>)}
         </div>
