@@ -7,7 +7,7 @@ self.addEventListener("install", e => {
 });
 self.addEventListener("activate", e => e.waitUntil(Promise.all([
   self.clients.claim(),
-  caches.keys().then(k => Promise.all(k.filter(x => x !== CACHE).map(x => caches.delete(x))))
+  caches.keys().then(k => Promise.all(k.filter(x => x.startsWith("bloknot-") && x !== CACHE).map(x => caches.delete(x))))
 ])));
 self.addEventListener("fetch", e => {
   const r = e.request;
@@ -16,7 +16,7 @@ self.addEventListener("fetch", e => {
   const font = /fonts\.(googleapis|gstatic)\.com$/.test(u.hostname);
   if (u.origin !== location.origin && !font) return;
   if (font) {
-    e.respondWith(caches.match(r).then(hit => hit || fetch(r).then(res => {
+    e.respondWith(caches.match(r, { cacheName: CACHE }).then(hit => hit || fetch(r).then(res => {
       const cp = res.clone(); caches.open(CACHE).then(c => c.put(r, cp)); return res;
     })));
     return;
@@ -24,5 +24,5 @@ self.addEventListener("fetch", e => {
   e.respondWith(fetch(r).then(res => {
     if (res.ok) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(r, cp)); }
     return res;
-  }).catch(() => caches.match(r, { ignoreSearch: true }).then(hit => hit || caches.match("./"))));
+  }).catch(() => caches.match(r, { ignoreSearch: true, cacheName: CACHE }).then(hit => hit || caches.match("./", { cacheName: CACHE }))));
 });
